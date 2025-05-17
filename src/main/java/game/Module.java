@@ -15,6 +15,7 @@ import java.awt.image.BufferedImage;
 public class Module {
     
     public BufferedImage[] animation;
+    public BufferedImage resting;
     
     public Hitbox hitbox;
     
@@ -22,7 +23,7 @@ public class Module {
         
         animation = new BufferedImage[length];
         
-        for(int i = 1; i < length; i ++){
+        for(int i = 0; i < length; i ++){
             animation[i] = Textures.loadImage("/textures/"+path+"/"+Calcs.fillInt(i) + ".png");
         }
         

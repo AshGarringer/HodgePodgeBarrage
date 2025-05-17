@@ -13,9 +13,15 @@ import java.util.ArrayList;
  */
 public class Modules {
     
+    public static Module[] modules;
+    
+    private static final int NUM_MODULES = 3;
+    
     public static Module[] getModules(){
         
-        Module[] modules = new Module[1];
+        if(modules != null)return modules;
+        
+        modules = new Module[3];
         
         String s = FileLoader.separator();
         ArrayList<String> hitboxes = FileLoader.readLocalFile(s+"hitboxes");
@@ -24,9 +30,90 @@ public class Modules {
         if(!hitboxes.isEmpty()) damages = hitboxes.get(0).split(",");
         else damages = new String[0];
         
-        modules[0] = new Module("spear", hitboxes.get(1), 23, safelyGetValue(damages,0));
+        modules[0] = new Module("spike", safelyGetString(hitboxes,1), 8, safelyGetValue(damages,0));
+        modules[1] = new Module("spear", safelyGetString(hitboxes,2), 23, safelyGetValue(damages,1));
+        modules[2] = new Module("saw", safelyGetString(hitboxes,3), 38, safelyGetValue(damages,2));
         
         return modules;
+    }
+    
+    public static Module[] resetModules(){
+        modules = null;
+        return getModules();
+    }
+    
+    public static void writeHitboxTXT() {
+        String s = FileLoader.separator();
+        ArrayList<String> hitboxes = FileLoader.readLocalFile(s + "hitboxes");
+    
+        StringBuilder hitboxTXT = new StringBuilder();
+    
+        // Handle the first line: damage values
+        String[] damages;
+        if (!hitboxes.isEmpty()) {
+            damages = hitboxes.get(0).split(",");
+        } else {
+            damages = new String[0];
+        }
+    
+        // Ensure the number of damage values matches the number of modules
+        if (damages.length < modules.length) {
+            String[] newDamages = new String[modules.length];
+            for (int i = 0; i < newDamages.length; i++) {
+                if (i < damages.length) {
+                    newDamages[i] = damages[i];
+                } else {
+                    newDamages[i] = "10"; // Default damage value
+                }
+            }
+            damages = newDamages;
+        }
+    
+        // Append the damage values to the first line
+        hitboxTXT.append(damages[0]);
+        for (int i = 1; i < damages.length; i++) {
+            hitboxTXT.append(",").append(damages[i]);
+        }
+    
+        
+        // Write the modules to the hitbox string
+        for (Module module : modules) {
+            
+            boolean frameAppended = false;
+            hitboxTXT.append("\n");
+            
+            for(int i = 0; i < module.hitbox.animation.length; i ++){
+                
+                boolean hitboxAppended = false;
+                HitboxPoint[] frame = module.hitbox.animation[i];
+                
+                if(frameAppended)hitboxTXT.append(" ");
+                else frameAppended = true;
+                
+                for(int j = 0; j < frame.length; j ++){
+                    
+                    HitboxPoint point = frame[j];
+                    
+                    if(point.radius != 0){
+                        
+                        if(hitboxAppended)
+                            hitboxTXT.append("-");
+                        hitboxAppended = true;
+                        
+                        hitboxTXT.append(point.x).append(",").append(point.y).append(",")
+                                .append(point.radius).append(",").append(point.type).append(",").append(point.intensity);
+                        // append hitbox values
+                        
+                    }
+                    
+                }
+                
+            }
+            
+        }
+    
+        // Write the hitbox data to the file
+        FileLoader.reWriteLocalFile(hitboxTXT.toString(), "resources"+s+"hitboxes");
     }
     
     public static String getValueIfExists(String[] arr, int index){
@@ -49,6 +136,14 @@ public class Modules {
         }
         catch (NumberFormatException e){
             return 0;
+        }
+    }
+    public static String safelyGetString(ArrayList<String> arr, int index){
+        try {
+            return arr.get(index);
+        }
+        catch (Exception e){
+            return "";
         }
     }
 }

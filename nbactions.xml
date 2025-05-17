@@ -52,4 +52,11 @@
                 <exec.appArgs></exec.appArgs>
             </properties>
         </action>
+        <action>
+            <actionName>CUSTOM-Run Project</actionName>
+            <displayName>Run Project</displayName>
+            <goals>
+                <goal>exec:java</goal>
+            </goals>
+        </action>
     </actions>
