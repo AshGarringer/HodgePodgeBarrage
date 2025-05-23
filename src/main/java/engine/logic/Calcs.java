@@ -32,15 +32,15 @@ public class Calcs {
         return rotatePoint(rotate.x,rotate.y,rotate_point.x,rotate_point.y,degrees);
     }
     
-    public static Point rotatePoint(Point rotate, int rotate_x, int rotate_y, double degrees){
+    public static Point rotatePoint(Point rotate, float rotate_x, float rotate_y, double degrees){
         return rotatePoint(rotate.x,rotate.y,rotate_x,rotate_y,degrees);
     }
     
-    public static Point rotatePoint(int x, int y, Point rotate_point, double degrees){
+    public static Point rotatePoint(float x, float y, Point rotate_point, double degrees){
         return rotatePoint(x,y,rotate_point.x,rotate_point.y,degrees);
     }
     
-    public static Point rotatePoint(int x, int y, int rotate_x, int rotate_y, double degrees){
+    public static Point rotatePoint(float x, float y, float rotate_x, float rotate_y, double degrees){
         
         degrees = Math.toRadians(degrees);
         

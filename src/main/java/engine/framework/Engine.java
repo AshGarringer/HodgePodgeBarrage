@@ -74,7 +74,7 @@ public abstract class Engine extends Canvas implements Runnable{
                 }
                 
                 if(tickTimer == 0) {
-                    System.out.println(((sumTime/(float)tps)/time_per_tick)*100 + "%");
+//                    System.out.println(((sumTime/(float)tps)/time_per_tick)*100 + "%");
                     sumTime = 0;
                     tickTimer = 0;
                 }

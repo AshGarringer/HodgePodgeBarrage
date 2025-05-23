@@ -37,6 +37,16 @@ public class Modules {
         return modules;
     }
     
+    public static Module[] loadModuleSelection(Integer[] selected){
+        Module[] returnModules = new Module[4];
+        if(selected.length < 4)return null;
+        returnModules[0] = modules[selected[0]].duplicate();
+        returnModules[1] = modules[selected[1]].duplicate();
+        returnModules[2] = modules[selected[2]].duplicate();
+        returnModules[3] = modules[selected[3]].duplicate();
+        return returnModules;
+    }
+    
     public static Module[] resetModules(){
         modules = null;
         return getModules();

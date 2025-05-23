@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="37deb970-f185-44e2-804f-325fc72186be" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/src/main/java/engine/framework/Engine.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/engine/framework/Engine.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/engine/framework/MultiState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/engine/framework/MultiState.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/game/Game.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/game/Game.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/game/Module.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/game/Module.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/game/Modules.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/game/Modules.java" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;customColor&quot;: &quot;&quot;,
+  &quot;associatedIndex&quot;: 0
+}</component>
+  <component name="ProjectId" id="2xKuwRkwPixsGTdvz4hHiFj78p4" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "master",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "/home/cookiebot/JavaProjects/streamlinebase",
+    "settings.editor.selected.configurable": "preferences.pluginManager"
+  }
+}]]></component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="37deb970-f185-44e2-804f-325fc72186be" name="Changes" comment="" />
+      <created>1747699327247</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1747699327247</updated>
+    </task>
+    <servers />
+  </component>
+</project>

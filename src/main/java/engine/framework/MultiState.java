@@ -2,7 +2,7 @@ package engine.framework;
 
 public class MultiState {
 	
-	private int state = 0;
+	private int state;
 	private int nextState = 0;
 	private boolean isTransitioning = false;
 	private int outTimer = 0;
@@ -11,6 +11,14 @@ public class MultiState {
 	private int maxInTimer = 0;
 	private float transitionPercent = 0;
 	
+        public MultiState(){
+            this(0);
+        }
+        
+        public MultiState(int state){
+            this.state = 0;
+        }
+        
 	public void transition(int out, int in) {
 		isTransitioning = true;
 		outTimer = out;
@@ -56,4 +64,7 @@ public class MultiState {
 	public int state() {
 		return state;
 	}
+        public void setState(int state){
+            this.state = state;
+        }
 }
