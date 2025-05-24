@@ -85,103 +85,23 @@ public class Text {
         g.drawString(T,x, y);
         g.setColor(col);
     }
-    public void drawStringUncenteredLeft(int X, int Y, String T, Graphics g){
-        g.setFont(font);
-        Color col = g.getColor();
-        FontMetrics fm = g.getFontMetrics(font);
-        int y = (int)(Y + (fm.getHeight()+ fm.getAscent())/4.8f);
-        for(int i = 1; i <= shadow_height;i +=1){
-            g.setColor(shadow_color);
-            g.drawString(T, X, y+i);
-            if(around == Text.OUTLINE){
-                g.drawString(T, X, y-i);
-                g.drawString(T, X+i, y);
-                g.drawString(T, X-i, y);
-                
-                g.drawString(T, X+i, y+i);
-                g.drawString(T, X-i, y+i);
-                g.drawString(T, X+i, y-i);
-                g.drawString(T, X-i, y-i);
-            }
-        }
-        g.setColor(color);
-        g.drawString(T, X, y);
-        g.setColor(col);
-    }
-    public void drawStringUncenteredLeft(int X, int Y, String T, Graphics g, Color c){
-        g.setColor(c);
+    public void drawString(int X, int Y, String T, int allignx, int alligny, Graphics g){
         g.setFont(font);
         FontMetrics fm = g.getFontMetrics(font);
-        int y = (int)(Y + (fm.getHeight()+ fm.getAscent())/4.8f);
-        g.drawString(T, X, y);
-    }
-    public void drawStringUncenteredLeftAndUp(int X, int Y, String T, Graphics g){
-        g.setFont(font);
-        FontMetrics fm = g.getFontMetrics(font);
-        Y += fm.getHeight()-fm.getDescent();
-        for(int i = 1; i <= shadow_height;i +=1){
-            g.setColor(shadow_color);
-            g.drawString(T, X, Y+i);
-            if(around == Text.OUTLINE){
-                g.drawString(T, X, Y-i);
-                g.drawString(T, X+i, Y);
-                g.drawString(T, X-i, Y);
-                
-                g.drawString(T, X+i, Y+i);
-                g.drawString(T, X-i, Y+i);
-                g.drawString(T, X+i, Y-i);
-                g.drawString(T, X-i, Y-i);
-            }
-        }
-        g.setColor(color);
-        g.drawString(T, X, Y);
+        int x = X + fm.stringWidth(T)*(allignx-1)/2;
+        int y;
+        if(alligny == 0)
+            y = (int)(Y + (fm.getHeight()+ fm.getAscent())/4.8f);
+        else if(alligny == -1)
+            y = (int)(Y + fm.getHeight()-fm.getDescent());
+        else
+            y = Y-fm.getDescent();
         
-    }
-    public void drawStringUncenteredRight(int X, int Y, String T, Graphics g){
-        g.setFont(font);
-        FontMetrics fm = g.getFontMetrics(font);
-        X = X - fm.stringWidth(T);
-        Y = (int)(Y + (fm.getHeight()+ fm.getAscent())/4.8f);for(int i = 1; i <= shadow_height;i +=1){
-            g.setColor(shadow_color);
-            g.drawString(T, X, Y+i);
-            if(around == Text.OUTLINE){
-                g.drawString(T, X, Y-i);
-                g.drawString(T, X+i, Y);
-                g.drawString(T, X-i, Y);
-                
-                g.drawString(T, X+i, Y+i);
-                g.drawString(T, X-i, Y+i);
-                g.drawString(T, X+i, Y-i);
-                g.drawString(T, X-i, Y-i);
-            }
-        }
-        g.setColor(color);
-        g.drawString(T, X, Y);
-        
-    }
-    public void drawStringUncenteredRightAndUp(int X, int Y, String T, Graphics g){
-        g.setFont(font);
-        FontMetrics fm = g.getFontMetrics(font);
-        int x = X - fm.stringWidth(T);
-        int y = (int)(Y + fm.getHeight()-fm.getDescent());
-        
-        for(int i = 1; i <= shadow_height;i +=1){
-            g.setColor(shadow_color);
-            g.drawString(T, x, y+i);
-            if(around == Text.OUTLINE){
-                g.drawString(T, x, y-i);
-                g.drawString(T, x+i, y);
-                g.drawString(T, x-i, y);
-                
-                g.drawString(T, x+i, y+i);
-                g.drawString(T, x-i, y+i);
-                g.drawString(T, x+i, y-i);
-                g.drawString(T, x-i, y-i);
-            }
+        if(shadow_height > 0){
+            drawEffect(T, x, y, g);
         }
         g.setColor(color);
         g.drawString(T, x, y);
-        
     }
     
     public void fontify(String p, int s, Color c){

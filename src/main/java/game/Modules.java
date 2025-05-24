@@ -40,10 +40,10 @@ public class Modules {
     public static Module[] loadModuleSelection(Integer[] selected){
         Module[] returnModules = new Module[4];
         if(selected.length < 4)return null;
-        returnModules[0] = modules[selected[0]].duplicate();
-        returnModules[1] = modules[selected[1]].duplicate();
-        returnModules[2] = modules[selected[2]].duplicate();
-        returnModules[3] = modules[selected[3]].duplicate();
+        returnModules[0] = modules[selected[0]].duplicate(0);
+        returnModules[1] = modules[selected[1]].duplicate(1);
+        returnModules[2] = modules[selected[2]].duplicate(2);
+        returnModules[3] = modules[selected[3]].duplicate(3);
         return returnModules;
     }
     

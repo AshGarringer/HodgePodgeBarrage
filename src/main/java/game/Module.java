@@ -21,18 +21,19 @@ public class Module {
     int frame = 0;
     int frameTimer = 0;
     int length;
-    
+    private boolean buffered = false;
     
     public Module(String path, String hitbox_string, int length, int damage){
         
         this.length = length;
+        
         animation = new BufferedImage[length];
         
         for(int i = 0; i < length; i ++){
             animation[i] = Textures.loadImage("/textures/"+path+"/"+Calcs.fillInt(i) + ".png");
         }
         
-        hitbox = new Hitbox(hitbox_string, length, damage);
+        hitbox = new Hitbox(hitbox_string, length, damage, this);
     }
     
     public void tick(){
@@ -43,14 +44,19 @@ public class Module {
             }
             if(frame >= animation.length){
                 frame = 0;
+                if(buffered)activate();
             }
             frameTimer = 0;
         }
     }
     
     public void activate(){
+        buffered = false;
         if(frame == 0){
             frame ++;
+        }
+        else if(Math.abs(animation.length -frame) < animation.length/4){
+            buffered = true;
         }
     }
     
@@ -62,12 +68,13 @@ public class Module {
         return hitbox.animation[frame];
     }
     
-    private Module(BufferedImage[] animation, Hitbox hitbox){
+    private Module(BufferedImage[] animation, Hitbox hitbox, int index){
          this.animation = animation;
          this.hitbox = hitbox;
+         this.hitbox.parent = this;
     }
     
-    public Module duplicate(){
-        return new Module(animation,hitbox);
+    public Module duplicate(int index){
+        return new Module(animation,hitbox,index);
     }
 }

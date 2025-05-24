@@ -12,9 +12,14 @@ import java.awt.Point;
  */
 public class Hitbox {
     
-    HitboxPoint[][] animation;
+    public HitboxPoint[][] animation;
+    public Module parent;
+    public int damage;
     
-    public Hitbox(String hitboxes, int length, int damage){
+    public Hitbox(String hitboxes, int length, int damage, Module parent){
+        
+        this.damage = damage;
+        this.parent = parent;
         
         String[] frames = hitboxes.split(" ");
         
@@ -25,7 +30,7 @@ public class Hitbox {
                 String[] individual_hitboxes = frames[i].split("-");
                 animation[i] = new HitboxPoint[individual_hitboxes.length];
                 for(int j = 0; j < individual_hitboxes.length; j ++){
-                    animation[i][j] = new HitboxPoint(individual_hitboxes[j], damage);
+                    animation[i][j] = new HitboxPoint(individual_hitboxes[j], damage, this);
                 }
             }else{
                 animation[i] = new HitboxPoint[1];

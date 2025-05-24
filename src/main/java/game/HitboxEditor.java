@@ -393,7 +393,8 @@ public class HitboxEditor extends javax.swing.JFrame {
             HitboxPoint[] original = modules[moduleSelected].hitbox.animation[frameSelected-1];
             HitboxPoint[] duplicate = new HitboxPoint[original.length];
             for(int i = 0; i < original.length; i ++){
-                duplicate[i] = new HitboxPoint(original[i].x,original[i].y,original[i].radius,original[i].type,original[i].intensity);
+                duplicate[i] = new HitboxPoint(original[i].x,original[i].y,original[i].radius,original[i].type,
+                        original[i].intensity,original[i].parent);
             }
             modules[moduleSelected].hitbox.animation[frameSelected] = duplicate;
             frameSelected = -1;
@@ -438,12 +439,11 @@ public class HitboxEditor extends javax.swing.JFrame {
         
         if(currentHitboxes.length == 1 && currentHitboxes[0].radius == 0){
             
-            modules[moduleSelected].hitbox.animation[frameSelected][0] = new HitboxPoint(40, 50, 10, 1, 100);
+            modules[moduleSelected].hitbox.animation[frameSelected][0] = new HitboxPoint(40, 50, 10, 1, 100,null);
             
             hitboxSelected = -1;
             AdjustValues();
             return;
-            
         }
 
         // Create a new array with one additional slot for the new hitbox
@@ -451,7 +451,7 @@ public class HitboxEditor extends javax.swing.JFrame {
         for (int i = 0; i < currentHitboxes.length; i++) {
             newHitboxes[i] = currentHitboxes[i];
         }
-        newHitboxes[newHitboxes.length - 1] = new HitboxPoint(40, 50, 10, 1, 100); // Add the new hitbox
+        newHitboxes[newHitboxes.length - 1] = new HitboxPoint(40, 50, 10, 1, 100,null); // Add the new hitbox
 
         // Update the appropriate hitbox array
         modules[moduleSelected].hitbox.animation[frameSelected] = newHitboxes;
