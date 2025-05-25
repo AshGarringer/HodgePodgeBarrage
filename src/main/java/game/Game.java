@@ -33,6 +33,7 @@ public class Game extends Engine{
         text2 = new Text("Regular2",30,Color.white, 5, Color.black, true);
         state = new MultiState(0);
         modules = Modules.getModules();
+        Players.loadImages();
         players = new ArrayList<>();
         controllers = new ArrayList<>();
         this.start("HodgePodgeRobotBarrage", 1600, 900, false);
@@ -79,7 +80,8 @@ public class Game extends Engine{
                 break;
             case 3:
                 for(int i = 0; i < players.size(); i ++){
-                    players.get(i).tickGame(controllers.get(i));
+                    if(players.get(i).alive)
+                        players.get(i).tickGame(controllers.get(i));
                 }
                 break;
             case 4:
@@ -130,7 +132,8 @@ public class Game extends Engine{
                 drawStats(g);
                 g.translate(width/2,height/2);
                 for(int i = 0; i < players.size(); i ++){
-                    players.get(i).renderGame(g);
+                    if(players.get(i).alive)
+                        players.get(i).renderGame(g);
                 }
                 checkCollisions();
                 break;
@@ -156,10 +159,10 @@ public class Game extends Engine{
 
         for (int i = 0; i < players.size(); i++) {
             Player p1 = players.get(i);
-            if (p1.hitboxes == null) continue;
+            if (p1.hitboxes == null || !p1.alive) continue;
             for (int j = i + 1; j < players.size(); j++) {
                 Player p2 = players.get(j);
-                if (p2.hitboxes == null) continue;
+                if (p2.hitboxes == null || !p1.alive) continue;
 
                 boolean playersCollided = false;
                 HitboxPoint p1defend = null;
@@ -183,13 +186,13 @@ public class Game extends Engine{
                             
                             playersCollided = true;
                             
-                            if(hb1.type == 1 && hb2.type == 0){
+                            if((hb1.type == 1 || hb1.type == 10)&& hb2.type == 0){
                                 if(p1attack == null || hb1.intensity > p1attack.intensity){
                                     p1attack = hb1;
                                     p2defend = hb2;
                                 }
                             }
-                            if(hb1.type == 0 && hb2.type == 1){
+                            if(hb1.type == 0 && (hb2.type == 1|| hb1.type == 10)){
                                 if(p2attack == null || hb2.intensity > p2attack.intensity){
                                     p2attack = hb2;
                                     p1defend = hb1;
@@ -206,7 +209,26 @@ public class Game extends Engine{
                         p1.intersecting.add(p2);
                     }
                     if(!p2.intersecting.contains(p1)){
+                        
                         p2.intersecting.add(p1);
+                        
+                        if(p1attack != null && p2defend != null && p1attack.type == 10){
+                            double rotation = Math.atan2(p2.y-p1.y, p2.x-p1.x);
+                            int damage = 5;
+                            if(p1attack.radius > 90)damage = 20;
+                            p2.takeDamage((int)(p1attack.intensity*p2defend.intensity*damage/10000), p1attack.type, rotation);
+                            p2.rVel = -p1.rVel/3;
+                            continue;
+                        }
+                        if(p2attack != null && p1defend != null && p2attack.type == 10){
+                            double rotation = Math.atan2(p1.y-p2.y, p1.x-p2.x);
+                            int damage = 5;
+                            if(p2attack.radius > 90)damage = 15;
+                            p1.takeDamage((int)(p2attack.intensity*p1defend.intensity*damage/10000), p2attack.type, rotation);
+                            p1.rVel = -p2.rVel/3;
+                            continue;
+                        }
+                        
                         p1.revertPos();
                         p2.revertPos();
                         float p1x = p1.xVel;
@@ -228,7 +250,6 @@ public class Game extends Engine{
                         if(p2attack != null && p1defend != null){
                             int moduleNum = getModuleIndexForHitbox(p2, p2attack);
                             double rotation = p2.rotation + moduleNum * Math.PI / 2 - Math.PI/2;
-                            System.out.println(getModuleIndexForHitbox(p2, p1attack));
                             p1.takeDamage((int)(p2attack.intensity*p1defend.intensity*p2attack.parent.damage/10000), p2attack.type, rotation);
                             p2.addPause((int)(p2attack.intensity*p1defend.intensity*p2attack.parent.damage/10000));
                         }

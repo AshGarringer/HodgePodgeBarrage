@@ -19,7 +19,7 @@ public class HitboxPoint {
     int intensity;
     public Hitbox parent;
     
-    public HitboxPoint(String string, int damage, Hitbox parent){
+    public HitboxPoint(String string, Hitbox parent){
         String[] arr = string.split(",");
         try{
             x = Integer.parseInt(arr[0]);

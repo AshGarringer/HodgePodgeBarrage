@@ -25,6 +25,8 @@ public class Player {
     private static final Color HITBOX3 = new Color(255,255,0,100);
     private static final Color HITBOX4 = new Color(50,50,50,100);
     
+    public static boolean DRAW_HITBOXES = false;
+    
     Integer[] selected;
     Module[] modules;
     BufferedImage body;
@@ -47,9 +49,18 @@ public class Player {
     int maxPause;
     int pause;
     
-    int deathAcc = 0;
-    int deathVelocity = 0;
-    int deathLevel = 0;
+    float deathVelocity = 0;
+    float deathLevel = 0;
+    
+    int mashButton = 0;
+    int spinDirection = 0;
+    
+    int mashFrame = 0;
+    int sparkFrame = 0;
+    
+    int explosionFrame = 0;
+    
+    boolean alive = true;
     
     ArrayList<Player> intersecting;
 
@@ -80,10 +91,50 @@ public class Player {
     
     public void tickGame(SnesController controller){
         
+        
+        if(explosionFrame > 0){
+            
+            hitboxes = new HitboxPoint[1];
+            hitboxes[0] = new HitboxPoint((int)x,(int)y,100,10,100,null);
+            return;
+        }
+        
         if(pause > 0){
             jitterX *= -1;
             jitterY *= -1;
             pause --;
+            return;
+        }
+        else if (deathVelocity > 0){
+            deathLevel += deathVelocity;
+
+            if(controller.pressed(SnesController.X + mashButton)){
+                deathVelocity -= 0.1;
+            }
+            controller.clearPressed();
+
+            if(deathLevel >= 100){
+                deathVelocity = 0;
+                deathLevel = 0;
+                explosionFrame ++;
+            }
+            else if(deathLevel <= 0){
+                deathLevel = 0;
+                deathVelocity = 0;
+                explosionFrame = 0;
+            }
+
+            lastX = x;
+            lastY = y;
+
+            xVel *= 0.97;
+            yVel *= 0.97;
+            x += xVel;
+            y += yVel;
+            rVel = (rotation + spinDirection*deathLevel/300f)%(float)(Math.PI*2)-rotation;
+            rotation = (rotation + spinDirection*deathLevel/300f)%(float)(Math.PI*2);
+            hitboxes = new HitboxPoint[1];
+            hitboxes[0] = new HitboxPoint((int)x,(int)y,50,0,100,null);
             return;
         }
         
@@ -132,11 +183,14 @@ public class Player {
         if(controller.held(SnesController.RTRIGGER)){
             rotIntent ++;
         }
-        rVel += (maxRotSpeed*rotIntent - rVel)*0.1;
+        if(rVel <= maxRotSpeed)
+            rVel += (maxRotSpeed*rotIntent - rVel)*0.1;
+        else
+            rVel += (maxRotSpeed*rotIntent - rVel)*0.03;
         rotation = (float)((rotation+rVel)%(Math.PI*2));
 
         for(int i = SnesController.X; i <= SnesController.Y; i ++){
-            if(controller.pressed(i)){
+            if(controller.pressed(i) && rVel <= maxRotSpeed){
                 modules[i].activate();
                 rVel *= 0.5;
                 if(rotIntent == 0){
@@ -177,6 +231,16 @@ public class Player {
         direction = Math.atan2(yVel, xVel);
         jitterX = (float)Math.cos(direction)*damage/2;
         jitterY = (float)Math.sin(direction)*damage/2;
+        
+        if(this.damage >= 100){
+            deathVelocity = (float)(Math.sqrt(this.damage-60)*damage/(float)300);
+            if(deathVelocity < 0.1)deathVelocity = 0;
+            else{
+                mashButton = Players.random.nextInt(4);
+            }
+            if(rVel > 0)spinDirection = 1;
+            else spinDirection = -1;
+        }
 
         this.damage += damage;
     }
@@ -196,12 +260,31 @@ public class Player {
     
     public void renderGame(Graphics2D g){
         
+        if(explosionFrame > 0){
+            
+            g.drawImage(Players.explosion[explosionFrame], (int)x - 120,(int)y-120,null);
+            
+            explosionFrame ++;
+            if(explosionFrame > 39)alive = false;
+            return;
+        }
+        
         float x2 = this.x;
         float y2 = this.y;
         
         if(pause > 0 && (jitterX > 0 || jitterY > 0)){
             x2 += jitterX*((float)pause/maxPause);
             y2 += jitterY*((float)pause/maxPause);
+        }
+        if(deathVelocity > 0){
+            float dist = deathLevel*8/100f + Players.random.nextFloat((deathLevel+0.01f)*2/100);
+            double angle = Players.random.nextDouble(Math.PI*2);
+            x2 += Math.cos(angle)*dist;
+            y2 += Math.sin(angle)*dist;
+            sparkFrame ++;
+            if(sparkFrame >= 50)sparkFrame = 0;
+            mashFrame ++;
+            if(mashFrame >= 9)mashFrame = 0;
         }
         
         g.setColor(new Color(255,0,0,100));
@@ -216,20 +299,33 @@ public class Player {
         g.drawImage(body, -40,-40, null);
         g.rotate(-rotation);
         g.translate(-x2,-y2);
-        int lastType = -1;
-        for(int i = 0; i < hitboxes.length; i ++){
-            HitboxPoint hp = hitboxes[i];
-            if(hp.type != lastType){
-                lastType = hp.type;
-                switch(hp.type){
-                    case 0 -> g.setColor(HITBOX0);
-                    case 1 -> g.setColor(HITBOX1);
-                    case 2 -> g.setColor(HITBOX2);
-                    case 3 -> g.setColor(HITBOX3);
-                    default -> g.setColor(HITBOX4);
+        
+        if(deathVelocity>0 && pause == 0){
+            x2 += (x-x2)*0.6f;
+            y2 += (y-y2)*0.6f;
+            
+            g.translate(x2,y2);
+            g.drawImage(Players.mash[mashButton][mashFrame], -20,-20, null);
+            if(deathLevel > 40)
+                g.drawImage(Players.sparks[sparkFrame], -60,-60, null);
+            g.translate(-x2,-y2);
+        }
+        if(DRAW_HITBOXES){
+            int lastType = -1;
+            for(int i = 0; i < hitboxes.length; i ++){
+                HitboxPoint hp = hitboxes[i];
+                if(hp.type != lastType){
+                    lastType = hp.type;
+                    switch(hp.type){
+                        case 0 -> g.setColor(HITBOX0);
+                        case 1 -> g.setColor(HITBOX1);
+                        case 2 -> g.setColor(HITBOX2);
+                        case 3 -> g.setColor(HITBOX3);
+                        default -> g.setColor(HITBOX4);
+                    }
                 }
+                g.fillOval(hp.x-hp.radius,hp.y-hp.radius,hp.radius*2,hp.radius*2);
             }
-            g.fillOval(hp.x-hp.radius,hp.y-hp.radius,hp.radius*2,hp.radius*2);
         }
     }
 }

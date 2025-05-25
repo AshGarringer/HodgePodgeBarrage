@@ -30,13 +30,20 @@ public class Hitbox {
                 String[] individual_hitboxes = frames[i].split("-");
                 animation[i] = new HitboxPoint[individual_hitboxes.length];
                 for(int j = 0; j < individual_hitboxes.length; j ++){
-                    animation[i][j] = new HitboxPoint(individual_hitboxes[j], damage, this);
+                    animation[i][j] = new HitboxPoint(individual_hitboxes[j], this);
                 }
             }else{
                 animation[i] = new HitboxPoint[1];
                 animation[i][0] = new HitboxPoint();
             }
         }
+    }
+    // Explosion
+    public Hitbox(int damage, HitboxPoint point){
+        
+        this.damage = damage;
+        animation = new HitboxPoint[1][];
+        animation[0] = new HitboxPoint[]{new HitboxPoint(point.x,point.y,point.radius,point.type,point.intensity,this)};
         
     }
     
