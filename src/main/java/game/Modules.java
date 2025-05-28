@@ -5,6 +5,9 @@
 package game;
 
 import engine.files.FileLoader;
+import engine.graphics.Textures;
+import engine.logic.Calcs;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
 /**
@@ -15,7 +18,8 @@ public class Modules {
     
     public static Module[] modules;
     
-    private static final int NUM_MODULES = 3;
+    
+    public static final int NUM_MODULES = 3;
     
     public static Module[] getModules(){
         

@@ -6,6 +6,7 @@ package game;
 
 import engine.graphics.Textures;
 import engine.logic.Calcs;
+import java.awt.Color;
 import java.awt.image.BufferedImage;
 
 /**
@@ -32,7 +33,7 @@ public class Module {
         for(int i = 0; i < length; i ++){
             animation[i] = Textures.loadImage("/textures/"+path+"/"+Calcs.fillInt(i) + ".png");
         }
-        
+         
         hitbox = new Hitbox(hitbox_string, length, damage, this);
     }
     

@@ -7,6 +7,7 @@ package game;
 import engine.graphics.Textures;
 import engine.input.SnesController;
 import engine.logic.Calcs;
+import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Point;
@@ -29,12 +30,12 @@ public class Player {
     
     Integer[] selected;
     Module[] modules;
-    BufferedImage body;
+    Integer center;
     HitboxPoint[] hitboxes;
     
     int playerNum;
     
-    float lastX, lastY;
+    float lastX, lastY, lastR;
     
     float x,y,rotation;
     float xVel,yVel,rVel; 
@@ -48,6 +49,8 @@ public class Player {
 
     int maxPause;
     int pause;
+    
+    int damageFrame = 0;
     
     float deathVelocity = 0;
     float deathLevel = 0;
@@ -74,28 +77,36 @@ public class Player {
         damage = 0;
         maxPause = 0;
         intersecting = new ArrayList<>();
-        damage = 0;
     }
     
     public void tickMenu(SnesController controller){
         
     }
     
-    public void init(Module[] modules, Integer playerNum){
+    public void init(Module[] modules, int center, Integer playerNum){
         this.modules = modules;
+        this.center = center;
         this.playerNum = playerNum;
+        if(Players.centersTilted[center])rotation -= (float)Math.PI/4f;
         x = -200 + 400*(playerNum%2);
         y = -200 + 400*(playerNum/2);
-        body = Textures.loadImage("/textures/players/smiley.png");
     }
     
     public void tickGame(SnesController controller){
         
+        if(!alive){
+            hitboxes = null;
+            return;
+        }
         
         if(explosionFrame > 0){
-            
-            hitboxes = new HitboxPoint[1];
-            hitboxes[0] = new HitboxPoint((int)x,(int)y,100,10,100,null);
+            if(explosionFrame > 3 && explosionFrame < 15){
+                hitboxes = new HitboxPoint[1];
+                hitboxes[0] = new HitboxPoint((int)x,(int)y,100,10,100,null);
+            }
+            else{
+                hitboxes = null;
+            }
             return;
         }
         
@@ -103,10 +114,17 @@ public class Player {
             jitterX *= -1;
             jitterY *= -1;
             pause --;
+            if(deathVelocity > 0 || deathLevel > 0){
+                if(controller.pressed(SnesController.X + mashButton)){
+                    deathVelocity -= 0.1;
+                }
+            }
             return;
         }
-        else if (deathVelocity > 0){
+        else if (deathVelocity > 0 || deathLevel > 0){
             deathLevel += deathVelocity;
+            if(deathLevel < 90 && deathVelocity <0)
+                deathLevel = 0;
 
             if(controller.pressed(SnesController.X + mashButton)){
                 deathVelocity -= 0.1;
@@ -117,11 +135,13 @@ public class Player {
                 deathVelocity = 0;
                 deathLevel = 0;
                 explosionFrame ++;
+                return;
             }
             else if(deathLevel <= 0){
                 deathLevel = 0;
                 deathVelocity = 0;
                 explosionFrame = 0;
+                return;
             }
 
             lastX = x;
@@ -131,6 +151,7 @@ public class Player {
             yVel *= 0.97;
             x += xVel;
             y += yVel;
+            lastR = rotation;
             rVel = (rotation + spinDirection*deathLevel/300f)%(float)(Math.PI*2)-rotation;
             rotation = (rotation + spinDirection*deathLevel/300f)%(float)(Math.PI*2);
             hitboxes = new HitboxPoint[1];
@@ -187,14 +208,17 @@ public class Player {
             rVel += (maxRotSpeed*rotIntent - rVel)*0.1;
         else
             rVel += (maxRotSpeed*rotIntent - rVel)*0.03;
+        lastR = rotation;
         rotation = (float)((rotation+rVel)%(Math.PI*2));
 
         for(int i = SnesController.X; i <= SnesController.Y; i ++){
             if(controller.pressed(i) && rVel <= maxRotSpeed){
                 modules[i].activate();
-                rVel *= 0.5;
-                if(rotIntent == 0){
+                if(rVel <= maxRotSpeed){
                     rVel *= 0.5;
+                    if(rotIntent == 0){
+                        rVel *= 0.5;
+                    }
                 }
             }
         }
@@ -220,6 +244,11 @@ public class Player {
     }
 
     public void takeDamage(int damage, int type, double direction){
+        
+        if(deathLevel > 0 || deathVelocity > 0){
+            addPause(damage);
+            return;
+        }
         pause = damage*2;
         maxPause = damage*2;
         
@@ -232,9 +261,9 @@ public class Player {
         jitterX = (float)Math.cos(direction)*damage/2;
         jitterY = (float)Math.sin(direction)*damage/2;
         
-        if(this.damage >= 100){
-            deathVelocity = (float)(Math.sqrt(this.damage-60)*damage/(float)300);
-            if(deathVelocity < 0.1)deathVelocity = 0;
+        if(this.damage > 60){
+            deathVelocity = (float)(Math.pow(this.damage-60,3/4f)*damage/(float)280);
+            if(deathVelocity < 0.15)deathVelocity = 0;
             else{
                 mashButton = Players.random.nextInt(4);
             }
@@ -246,6 +275,7 @@ public class Player {
     }
     
     public void addPause(int damageDealt){
+        
         pause = damageDealt*2;
         maxPause = damageDealt*2;
         
@@ -256,13 +286,18 @@ public class Player {
     public void revertPos(){
         x = lastX;
         y = lastY;
+        rotation = lastR;
     }
     
     public void renderGame(Graphics2D g){
         
+        if(!alive){
+            return;
+        }
+        
         if(explosionFrame > 0){
-            
             g.drawImage(Players.explosion[explosionFrame], (int)x - 120,(int)y-120,null);
+            
             
             explosionFrame ++;
             if(explosionFrame > 39)alive = false;
@@ -272,11 +307,11 @@ public class Player {
         float x2 = this.x;
         float y2 = this.y;
         
-        if(pause > 0 && (jitterX > 0 || jitterY > 0)){
+        if(pause > 0 && (Math.abs(jitterX) > 0 || Math.abs(jitterY) > 0)){
             x2 += jitterX*((float)pause/maxPause);
             y2 += jitterY*((float)pause/maxPause);
         }
-        if(deathVelocity > 0){
+        else if(deathVelocity > 0|| deathLevel > 0){
             float dist = deathLevel*8/100f + Players.random.nextFloat((deathLevel+0.01f)*2/100);
             double angle = Players.random.nextDouble(Math.PI*2);
             x2 += Math.cos(angle)*dist;
@@ -285,22 +320,69 @@ public class Player {
             if(sparkFrame >= 50)sparkFrame = 0;
             mashFrame ++;
             if(mashFrame >= 9)mashFrame = 0;
+        }else if(damage > 34 && damage < 200){
+            float dist = Players.random.nextFloat((damage-33.999f)*2/100);
+            double angle = Players.random.nextDouble(Math.PI*2);
+            x2 += Math.cos(angle)*dist;
+            y2 += Math.sin(angle)*dist;
         }
         
-        g.setColor(new Color(255,0,0,100));
-        g.translate(x2,y2);
-        g.rotate(rotation);
-        
-        for(int i = 0; i < 4; i ++){
-            BufferedImage image = modules[i].getImage();
-            g.drawImage(image,-40,-120,null);
-            g.rotate(Math.PI/2);
+        if(damage > 34){
+            int level = (damage-34)/33;
+            if(level > 3)level = 3;
+            if(damage >= 200 && deathVelocity <= 0 && deathLevel <= 0)level = 4;
+
+            // 1. Create an offscreen buffer (now 240x240)
+            BufferedImage playerBuffer = new BufferedImage(240, 240, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D gPlayer = playerBuffer.createGraphics();
+
+            // 2. Draw player and modules to the buffer, centered
+            gPlayer.translate(120, 120); // Center the drawing in the larger buffer
+            gPlayer.rotate(rotation);
+            for (int i = 0; i < 4; i++) {
+                BufferedImage image = modules[i].getImage();
+                gPlayer.drawImage(image, -40, -120, null);
+                gPlayer.rotate(Math.PI / 2);
+            }
+            gPlayer.drawImage(Players.centers[center], -40, -40, null);
+            gPlayer.dispose();
+
+            // 3. Draw the flash animation using SRC_ATOP
+            Graphics2D gFlash = playerBuffer.createGraphics();
+            gFlash.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, 0.7f));
+            gFlash.drawImage(Players.flashes[level][damageFrame], 40, 40, null); // Center the 160x160 flash in 240x240
+            gFlash.dispose();
+
+            // 4. Draw the result to the main graphics context
+            g.drawImage(playerBuffer, (int)x2 - 120, (int)y2 - 120, null);
+
+            // 5. Draw the damage overlay as before (optional)
+            
+            g.translate(x2, y2);
+            g.rotate(rotation);
+            if(Players.centersTilted[center])g.rotate((float)Math.PI/4f);
+            g.drawImage(Players.centers[center], -40, -40, null);
+            if(Players.centersTilted[center])g.rotate(-(float)Math.PI/4f);
+            g.rotate(-rotation);
+            g.translate(-x2, -y2);
+            damageFrame++;
+            if (damageFrame >= 24) damageFrame = 0;
+        } else {
+            // Draw player and modules as before if not flashing
+            g.translate(x2, y2);
+            g.rotate(rotation);
+            for (int i = 0; i < 4; i++) {
+                BufferedImage image = modules[i].getImage();
+                g.drawImage(image, -40, -120, null);
+                g.rotate(Math.PI / 2);
+            }
+            if(Players.centersTilted[center])g.rotate((float)Math.PI/4f);
+            g.drawImage(Players.centers[center], -40, -40, null);
+            if(Players.centersTilted[center])g.rotate(-(float)Math.PI/4f);
+            g.rotate(-rotation);
+            g.translate(-x2, -y2);
         }
-        g.drawImage(body, -40,-40, null);
-        g.rotate(-rotation);
-        g.translate(-x2,-y2);
-        
-        if(deathVelocity>0 && pause == 0){
+        if((deathVelocity>0 || deathLevel > 0)&& pause == 0){
             x2 += (x-x2)*0.6f;
             y2 += (y-y2)*0.6f;
             
