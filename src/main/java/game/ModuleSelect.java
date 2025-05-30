@@ -38,7 +38,7 @@ public class ModuleSelect {
             eqippedPreviews[i] = Textures.loadImage("/textures/moduleSelect/equippedModules/"+i+".png");
         }
         
-        String[] centerNames = new String[]{"smiley","drool"};
+        String[] centerNames = new String[]{"smiley","grin","dismay","stress","cyclops","drool"};
         playerPreviews = new BufferedImage[centerNames.length];
         for(int i = 0; i < centerNames.length; i ++){
             playerPreviews[i] = Textures.loadImage("/textures/moduleSelect/players/"+centerNames[i]+".png");

@@ -25,6 +25,8 @@ public class Players {
     public static BufferedImage charredRemains;
     
     public static BufferedImage[] centers;
+    public static BufferedImage[] centerOverlays;
+    public static BufferedImage highlight;
     public static Boolean[] centersTilted;
     
     public static void loadImages(){
@@ -32,14 +34,17 @@ public class Players {
         random = new Random();
         
         
-        String[] centerNames = new String[]{"smiley","drool"};
+        String[] centerNames = new String[]{"smiley","grin","dismay","stress","cyclops","drool"};
         centersTilted = new Boolean[]{
-                false, true
+                false, false, true, true, false, true
                 };
         centers = new BufferedImage[centerNames.length];
+        centerOverlays = new BufferedImage[centerNames.length];
         for(int i = 0; i < centerNames.length; i ++){
             centers[i] = Textures.loadImage("/textures/players/centers/"+centerNames[i]+".png");
+            centerOverlays[i] = Textures.loadImage("/textures/players/centers/"+centerNames[i]+"Overlay.png");
         }
+        highlight = Textures.loadImage("/textures/players/centers/highlight.png");
         
         damaged = new BufferedImage[5][];
         

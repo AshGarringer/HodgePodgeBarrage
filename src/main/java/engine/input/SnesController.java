@@ -136,13 +136,21 @@ public class SnesController {
         return event;
 
     }
-    
     public boolean pressed(int button_code){
+        return pressed(button_code, false);
+    }
+    
+    public boolean pressed(int button_code, boolean clear){
+        if(!clear)return pressed[button_code];
         boolean holder = pressed[button_code];
         pressed[button_code] = false;
         return holder;
     }
     public boolean released(int button_code){
+        return released(button_code, false);
+    }
+    public boolean released(int button_code, boolean clear){
+        if(!clear)return released[button_code];
         boolean holder = released[button_code];
         released[button_code] = false;
         return holder;

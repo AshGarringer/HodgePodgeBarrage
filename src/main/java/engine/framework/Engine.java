@@ -81,7 +81,7 @@ public abstract class Engine extends Canvas implements Runnable{
                 
                 Thread.sleep(Math.max(ticktime,0));
             } catch (InterruptedException ex) {
-                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(Engine.class.getName()).log(Level.SEVERE, null, ex);
             }
             
         }

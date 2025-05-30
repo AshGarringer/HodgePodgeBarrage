@@ -9,13 +9,14 @@ import engine.input.SnesController;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.Random;
 
 /**
  *
  * @author cookibot
  */
 public class Game extends Engine {
-
+    
     Module[] modules;
     MultiState state;
 
@@ -31,13 +32,24 @@ public class Game extends Engine {
 
     Text text;
     Text text2;
+    Text text3;
 
-    int timer = 1;
+    int timer;
     
+    int winner;
+    
+    Random random;
 
     public Game(){
+        init();
+        this.start("HodgePodgeRobotBarrage", 1600, 900, false);
+    }
+    
+    public void init(){
         text = new Text("Regular",40,Color.white);
         text2 = new Text("Regular2",30,Color.white, 5, Color.black, true);
+        text3 = new Text("Fancy",80,Color.black,5, Color.white, true);
+        random = new Random();
         state = new MultiState(0);
         modules = Modules.getModules();
         Players.loadImages();
@@ -49,7 +61,8 @@ public class Game extends Engine {
         playerMice = new ArrayList<>();
         playerHover = new ArrayList<>();
         controllers = new ArrayList<>();
-        this.start("HodgePodgeRobotBarrage", 1600, 900, false);
+        timer = 1;
+        winner = -1;
     }
 
     @Override
@@ -88,16 +101,43 @@ public class Game extends Engine {
                     }
                 }
                 break;
-            case 1:
-                // body select (might not use)
-                break;
             case 2:
                 if(state.isTransit())break;
+                if(checkKonami(controllers)!= -1){
+                    for(int i = 0; i < controllers.size(); i ++){
+                        for(int j = 0; j < 4; j ++){
+                            if(playerSelections.get(i)[j] < 0)playerSelections.get(i)[j] = random.nextInt(Modules.NUM_MODULES);
+                        }
+                    }
+                }
                 for (int i = 0; i < controllers.size(); i ++) {
                     SnesController controller = controllers.get(i);
                     if (controller.pressed(SnesController.START)) {
-                        state.transition(1, 3, 1);
+                        boolean allSelected = true;
+                        for(int k = 0; k < controllers.size(); k ++){
+                            for(int j = 0; j < 4; j ++){
+                                if(playerSelections.get(k)[j] < 0)allSelected = false;
+                            }
+                        }
+                        if(allSelected){
+                            for(int j = 0; j < controllers.size(); j ++){
+                                players.get(j).init(Modules.loadModuleSelection(playerSelections.get(j)),
+                                        centerSelections.get(j), j);
+                                
+                            System.out.println(Modules.loadModuleSelection(playerSelections.get(j)).length);
+                            }
+                            state.transition(0, 3, 0);
+                            return;
+                        }
                     }
+                    
+                    if(controller.pressed(SnesController.LTRIGGER)){
+                        centerSelections.set(i, (centerSelections.get(i) -1 + Players.centers.length)%Players.centers.length);
+                    }
+                    if(controller.pressed(SnesController.RTRIGGER)){
+                        centerSelections.set(i, (centerSelections.get(i) +1)%Players.centers.length);
+                    }
+                    
                     int xintent = 0;
                     int yintent = 0;
 
@@ -173,8 +213,23 @@ public class Game extends Engine {
                 }
                 break;
             case 3:
+                if(checkKonami(controllers)!= -1){
+                    Player.DRAW_HITBOXES = !Player.DRAW_HITBOXES;
+                }
+                int playersRemaining = 0;
+                boolean restart = false;
                 for (int i = 0; i < players.size(); i++) {
+                    if(i == winner && controllers.get(i).pressed(SnesController.START))restart = true;
                     players.get(i).tickGame(controllers.get(i));
+                    if(players.get(i).alive)playersRemaining++;
+                }
+                if(winner == -1 && playersRemaining == 1){
+                    for (int i = 0; i < players.size(); i++) {
+                        if(players.get(i).alive)winner = i;
+                    }
+                }
+                if(restart){
+                    init();
                 }
                 break;
             case 4:
@@ -188,7 +243,7 @@ public class Game extends Engine {
 
     @Override
     public void render(Graphics2D g) {
-//         setHints(g);
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
         int width = window.getWidth();
         int height = window.getHeight();
@@ -198,7 +253,9 @@ public class Game extends Engine {
                 // main menu
                 g.setColor(Color.BLACK);
                 g.fillRect(0, 0, width, height);
-                text.drawString(width/2, height/2, "Main Menu", g);
+                text3.drawString(width/2, height/2 - 130, "HODGE PODGE", g);
+                text3.drawString(width/2, height/2 - 30, "ROBOT BARRAGE", g);
+                text.drawString(width/2, height/2 + 50, "(temporary menu)", g);
 
                 for(int i = 0; i < players.size(); i ++){
                     text.drawString((int)((width/5f) *(i+1)), height - 40, "Player "+Integer.toString(i+1), g);
@@ -207,16 +264,6 @@ public class Game extends Engine {
                     g.setColor(new Color(0,0,0,(int)(255*state.getTransit())));
                     
                     g.fillRect(0, 0, width, height);
-                }
-                break;
-            case 1:
-                // body select (might not use)
-                g.setColor(Color.BLACK);
-                g.fillRect(0, 0, width, height);
-                text.drawString(width / 2, height / 2, "Body Select", g);
-
-                for(int i = 0; i < players.size(); i ++){
-                    text.drawString((int)((width/5f) *(i+1)), height - 40, "Player "+Integer.toString(i+1), g);
                 }
                 break;
             case 2:
@@ -271,6 +318,9 @@ public class Game extends Engine {
                     players.get(i).renderGame(g);
                 }
                 checkCollisions();
+                if(winner >= 0){
+                    text2.drawString(0, 0, "PLAYER "+winner+" WINS!", g);
+                }
                 break;
             case 4:
                 // aftermath
@@ -314,10 +364,13 @@ public class Game extends Engine {
         int width = window.getWidth();
         int height = window.getHeight();
 
-        text2.drawString(0, 0, (String) ("Player 1: " + players.get(0).damage).replace('0', 'O'), 1, -1, g);
-        text2.drawString(width, 0, (String) ("Player 2: " + players.get(1).damage).replace('0', 'O'), -1, -1, g);
-        text2.drawString(0, height, (String) ("Player 3: " + players.get(2).damage).replace('0', 'O'), 1, 1, g);
-        text2.drawString(width, height, (String) ("Player 4: " + players.get(3).damage).replace('0', 'O'), -1, 1, g);
+//        text2.drawString(0, 0, (String) ("Player 1: " + players.get(0).damage).replace('0', 'O'), 1, -1, g);
+//        if(players.size() <= 1)return;
+//        text2.drawString(width, 0, (String) ("Player 2: " + players.get(1).damage).replace('0', 'O'), -1, -1, g);
+//        if(players.size() <= 2)return;
+//        text2.drawString(0, height, (String) ("Player 3: " + players.get(2).damage).replace('0', 'O'), 1, 1, g);
+//        if(players.size() <= 3)return;
+//        text2.drawString(width, height, (String) ("Player 4: " + players.get(3).damage).replace('0', 'O'), -1, 1, g);
 
     }
 
@@ -462,5 +515,37 @@ public class Game extends Engine {
     public void getPlayers() {
         // load new controllers
         controllers = SnesController.getControllers();
+    }
+    
+    private final ArrayList<Integer> KonamiCodes = new ArrayList<Integer>();
+    
+    private static final Integer[] KONAMI_CODE = new Integer[]{
+        4,4,5,5,6,7,6,7,2,1
+    };
+    private int checkKonami(ArrayList<SnesController> controllers){
+        
+        while(KonamiCodes.size() < controllers.size()){
+            KonamiCodes.add(0);
+        }
+        for(int i = 0; i < controllers.size(); i ++){
+            if(controllers.get(i).pressed(KONAMI_CODE[KonamiCodes.get(i)])){
+                KonamiCodes.set(i, KonamiCodes.get(i)+1);
+            }
+            else{
+                for(int j = 0; j <= 3; j ++){
+                    if(controllers.get(i).pressed(j))KonamiCodes.set(i, 0);
+                }
+                for(int j = 8; j <= 11; j ++){
+                    if(controllers.get(i).pressed(j))KonamiCodes.set(i, 0);
+                }
+            }
+            if(KonamiCodes.get(i) == 10){
+                KonamiCodes.set(i, 0);
+                return i;
+            }
+            
+        }
+        
+        return -1;
     }
 }

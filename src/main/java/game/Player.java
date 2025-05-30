@@ -28,6 +28,8 @@ public class Player {
     
     public static boolean DRAW_HITBOXES = false;
     
+    public static double HIGHLIGHT_ANGLE = -Math.PI/4;
+    
     Integer[] selected;
     Module[] modules;
     Integer center;
@@ -66,6 +68,8 @@ public class Player {
     boolean alive = true;
     
     ArrayList<Player> intersecting;
+    
+    ArrayList<Projectile> projectiles;
 
     public Player(){
         x = 0;
@@ -204,10 +208,17 @@ public class Player {
         if(controller.held(SnesController.RTRIGGER)){
             rotIntent ++;
         }
-        if(rVel <= maxRotSpeed)
-            rVel += (maxRotSpeed*rotIntent - rVel)*0.1;
+        float maxRotSpeed2 = maxRotSpeed;
+        for(int i = 0; i < 4; i ++){
+            if(modules[i].frame <= modules[i].startup && modules[i].frame > 0){
+                maxRotSpeed2 /= 2;
+                break;
+            }
+        }
+        if(rVel <= maxRotSpeed2)
+            rVel += (maxRotSpeed2*rotIntent - rVel)*0.1;
         else
-            rVel += (maxRotSpeed*rotIntent - rVel)*0.03;
+            rVel += (maxRotSpeed2*rotIntent - rVel)*0.03;
         lastR = rotation;
         rotation = (float)((rotation+rVel)%(Math.PI*2));
 
@@ -263,7 +274,7 @@ public class Player {
         
         if(this.damage > 60){
             deathVelocity = (float)(Math.pow(this.damage-60,3/4f)*damage/(float)280);
-            if(deathVelocity < 0.15)deathVelocity = 0;
+            if(deathVelocity < 0.3)deathVelocity = 0;
             else{
                 mashButton = Players.random.nextInt(4);
             }
@@ -344,13 +355,23 @@ public class Player {
                 gPlayer.drawImage(image, -40, -120, null);
                 gPlayer.rotate(Math.PI / 2);
             }
+            if(Players.centersTilted[center])gPlayer.rotate((float)Math.PI/4f);
             gPlayer.drawImage(Players.centers[center], -40, -40, null);
+            if(Players.centersTilted[center])g.rotate(-(float)Math.PI/4f);
+            gPlayer.rotate(HIGHLIGHT_ANGLE - rotation);
+            gPlayer.drawImage(Players.highlight, -40, -40, 80, 80, null);
+            gPlayer.rotate(-HIGHLIGHT_ANGLE + rotation);
+            if(Players.centersTilted[center])g.rotate((float)Math.PI/4f);
+            gPlayer.drawImage(Players.centerOverlays[center], -40, -40, null);
+            if(Players.centersTilted[center])gPlayer.rotate(-(float)Math.PI/4f);
             gPlayer.dispose();
 
             // 3. Draw the flash animation using SRC_ATOP
             Graphics2D gFlash = playerBuffer.createGraphics();
             gFlash.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, 0.7f));
+            g.translate(x2-x, y2-x);
             gFlash.drawImage(Players.flashes[level][damageFrame], 40, 40, null); // Center the 160x160 flash in 240x240
+            g.translate(-x2+x, -y2+x);
             gFlash.dispose();
 
             // 4. Draw the result to the main graphics context
@@ -361,7 +382,7 @@ public class Player {
             g.translate(x2, y2);
             g.rotate(rotation);
             if(Players.centersTilted[center])g.rotate((float)Math.PI/4f);
-            g.drawImage(Players.centers[center], -40, -40, null);
+            g.drawImage(Players.damaged[level][damageFrame], -50, -50, null);
             if(Players.centersTilted[center])g.rotate(-(float)Math.PI/4f);
             g.rotate(-rotation);
             g.translate(-x2, -y2);
@@ -378,6 +399,12 @@ public class Player {
             }
             if(Players.centersTilted[center])g.rotate((float)Math.PI/4f);
             g.drawImage(Players.centers[center], -40, -40, null);
+            if(Players.centersTilted[center])g.rotate(-(float)Math.PI/4f);
+            g.rotate(HIGHLIGHT_ANGLE - rotation);
+            g.drawImage(Players.highlight, -40, -40, 80, 80, null);
+            g.rotate(-HIGHLIGHT_ANGLE + rotation);
+            if(Players.centersTilted[center])g.rotate((float)Math.PI/4f);
+            g.drawImage(Players.centerOverlays[center], -40, -40, null);
             if(Players.centersTilted[center])g.rotate(-(float)Math.PI/4f);
             g.rotate(-rotation);
             g.translate(-x2, -y2);
@@ -399,11 +426,11 @@ public class Player {
                 if(hp.type != lastType){
                     lastType = hp.type;
                     switch(hp.type){
-                        case 0 -> g.setColor(HITBOX0);
-                        case 1 -> g.setColor(HITBOX1);
-                        case 2 -> g.setColor(HITBOX2);
-                        case 3 -> g.setColor(HITBOX3);
-                        default -> g.setColor(HITBOX4);
+                        case 0:g.setColor(HITBOX0);break;
+                        case 1:g.setColor(HITBOX1);break;
+                        case 2:g.setColor(HITBOX2);break;
+                        case 3:g.setColor(HITBOX3);break;
+                        default:g.setColor(HITBOX4);break;
                     }
                 }
                 g.fillOval(hp.x-hp.radius,hp.y-hp.radius,hp.radius*2,hp.radius*2);

@@ -592,11 +592,11 @@ class CustomPanel extends javax.swing.JPanel {
                 if(hitboxSelected != i ){
                     HitboxPoint hitbox = hitboxFrame[i];
                     switch(hitbox.type){
-                        case 0 -> g2d.setColor(Color.RED);
-                        case 1 -> g2d.setColor(Color.GREEN);
-                        case 2 -> g2d.setColor(Color.BLUE);
-                        case 3 -> g2d.setColor(Color.YELLOW);
-                        default -> g2d.setColor(Color.DARK_GRAY);
+                        case 0:g2d.setColor(Color.RED);break;
+                        case 1:g2d.setColor(Color.GREEN);break;
+                        case 2: g2d.setColor(Color.BLUE);break;
+                        case 3: g2d.setColor(Color.YELLOW);break;
+                        default: g2d.setColor(Color.DARK_GRAY);break;
                     }
                     int opacity = (int)(hitbox.intensity+100);
                     g2d.setColor(new Color(g2d.getColor().getRed(),g2d.getColor().getGreen(),g2d.getColor().getBlue(),opacity));
@@ -610,11 +610,11 @@ class CustomPanel extends javax.swing.JPanel {
             }
             HitboxPoint hitbox = hitboxFrame[hitboxSelected];
             switch(hitbox.type){
-                case 0 -> g2d.setColor(Color.RED);
-                case 1 -> g2d.setColor(Color.GREEN);
-                case 2 -> g2d.setColor(Color.BLUE);
-                case 3 -> g2d.setColor(Color.YELLOW);
-                default -> g2d.setColor(Color.DARK_GRAY);
+                case 0:g2d.setColor(Color.RED);break;
+                case 1:g2d.setColor(Color.GREEN);break;
+                case 2:g2d.setColor(Color.BLUE);break;
+                case 3:g2d.setColor(Color.YELLOW);break;
+                default:g2d.setColor(Color.DARK_GRAY);break;
             }
             int opacity = (int)(hitbox.intensity*1.5 + 50);
             g2d.setColor(new Color(g2d.getColor().getRed(),g2d.getColor().getGreen(),g2d.getColor().getBlue(),opacity));

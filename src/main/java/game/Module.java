@@ -6,7 +6,7 @@ package game;
 
 import engine.graphics.Textures;
 import engine.logic.Calcs;
-import java.awt.Color;
+import java.awt.Point;
 import java.awt.image.BufferedImage;
 
 /**
@@ -19,22 +19,41 @@ public class Module {
     
     public Hitbox hitbox;
     
+    int startup = -1;
+    
     int frame = 0;
     int frameTimer = 0;
     int length;
+    
+    BufferedImage projectile;
+    
     private boolean buffered = false;
     
-    public Module(String path, String hitbox_string, int length, int damage){
+    public Module(String path, String hitbox_string, int length, int damage, int type){
         
         this.length = length;
         
         animation = new BufferedImage[length];
         
         for(int i = 0; i < length; i ++){
-            animation[i] = Textures.loadImage("/textures/"+path+"/"+Calcs.fillInt(i) + ".png");
+            animation[i] = Textures.loadImage("/textures/modules/"+path+"/"+Calcs.fillInt(i) + ".png");
         }
          
         hitbox = new Hitbox(hitbox_string, length, damage, this);
+        
+        if(type == 5){
+            projectile = Textures.loadImage("/textures/modules/"+path+"/projectile.png");
+        }
+        
+        for(int i = 0; i < hitbox.animation.length && startup == -1; i ++){
+            HitboxPoint[] arr = hitbox.animation[i];
+            for(int j = 0; j < arr.length; j ++){
+                if(arr[j].type > 0){
+                    startup = i;
+                    break;
+                }
+            }
+        }
     }
     
     public void tick(){
@@ -69,13 +88,14 @@ public class Module {
         return hitbox.animation[frame];
     }
     
-    private Module(BufferedImage[] animation, Hitbox hitbox, int index){
+    private Module(BufferedImage[] animation, Hitbox hitbox, int index,int startup){
          this.animation = animation;
          this.hitbox = hitbox;
          this.hitbox.parent = this;
+         this.startup = startup;
     }
     
     public Module duplicate(int index){
-        return new Module(animation,hitbox,index);
+        return new Module(animation,hitbox,index,startup);
     }
 }

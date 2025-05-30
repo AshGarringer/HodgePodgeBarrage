@@ -19,13 +19,13 @@ public class Modules {
     public static Module[] modules;
     
     
-    public static final int NUM_MODULES = 3;
+    public static final int NUM_MODULES = 7;
     
     public static Module[] getModules(){
         
         if(modules != null)return modules;
         
-        modules = new Module[3];
+        modules = new Module[7];
         
         String s = FileLoader.separator();
         ArrayList<String> hitboxes = FileLoader.readLocalFile(s+"hitboxes");
@@ -34,9 +34,13 @@ public class Modules {
         if(!hitboxes.isEmpty()) damages = hitboxes.get(0).split(",");
         else damages = new String[0];
         
-        modules[0] = new Module("spike", safelyGetString(hitboxes,1), 8, safelyGetValue(damages,0));
-        modules[1] = new Module("spear", safelyGetString(hitboxes,2), 23, safelyGetValue(damages,1));
-        modules[2] = new Module("saw", safelyGetString(hitboxes,3), 38, safelyGetValue(damages,2));
+        modules[0] = new Module("spike", safelyGetString(hitboxes,1), 8, safelyGetValue(damages,0),0);
+        modules[1] = new Module("spear", safelyGetString(hitboxes,2), 23, safelyGetValue(damages,1),1);
+        modules[2] = new Module("saw", safelyGetString(hitboxes,3), 38, safelyGetValue(damages,2),2);
+        modules[3] = new Module("shield", safelyGetString(hitboxes,4), 31, safelyGetValue(damages,3),3);
+        modules[4] = new Module("quickshield", safelyGetString(hitboxes,5), 11, safelyGetValue(damages,4),4);
+        modules[5] = new Module("shooter", safelyGetString(hitboxes,6), 9, safelyGetValue(damages,5),5);
+        modules[6] = new Module("reflector", safelyGetString(hitboxes,7), 14, safelyGetValue(damages,6),6);
         
         return modules;
     }
