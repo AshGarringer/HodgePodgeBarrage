@@ -44,7 +44,5 @@ public class Hitbox {
         this.damage = damage;
         animation = new HitboxPoint[1][];
         animation[0] = new HitboxPoint[]{new HitboxPoint(point.x,point.y,point.radius,point.type,point.intensity,this)};
-        
     }
-    
 }

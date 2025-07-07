@@ -88,14 +88,15 @@ public class Module {
         return hitbox.animation[frame];
     }
     
-    private Module(BufferedImage[] animation, Hitbox hitbox, int index,int startup){
+    private Module(BufferedImage[] animation, Hitbox hitbox, int index,int startup, BufferedImage projectile){
          this.animation = animation;
          this.hitbox = hitbox;
          this.hitbox.parent = this;
          this.startup = startup;
+         this.projectile = projectile;
     }
     
     public Module duplicate(int index){
-        return new Module(animation,hitbox,index,startup);
+        return new Module(animation,hitbox,index,startup,projectile);
     }
 }

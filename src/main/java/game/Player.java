@@ -30,6 +30,8 @@ public class Player {
     
     public static double HIGHLIGHT_ANGLE = -Math.PI/4;
     
+    Game game;
+    
     Integer[] selected;
     Module[] modules;
     Integer center;
@@ -68,10 +70,8 @@ public class Player {
     boolean alive = true;
     
     ArrayList<Player> intersecting;
-    
-    ArrayList<Projectile> projectiles;
 
-    public Player(){
+    public Player(Game game){
         x = 0;
         y = 0;
         rotation = 0;
@@ -81,6 +81,7 @@ public class Player {
         damage = 0;
         maxPause = 0;
         intersecting = new ArrayList<>();
+        this.game = game;
     }
     
     public void tickMenu(SnesController controller){
@@ -115,8 +116,6 @@ public class Player {
         }
         
         if(pause > 0){
-            jitterX *= -1;
-            jitterY *= -1;
             pause --;
             if(deathVelocity > 0 || deathLevel > 0){
                 if(controller.pressed(SnesController.X + mashButton)){
@@ -153,8 +152,7 @@ public class Player {
 
             xVel *= 0.97;
             yVel *= 0.97;
-            x += xVel;
-            y += yVel;
+            tryToMove(xVel,yVel);
             lastR = rotation;
             rVel = (rotation + spinDirection*deathLevel/300f)%(float)(Math.PI*2)-rotation;
             rotation = (rotation + spinDirection*deathLevel/300f)%(float)(Math.PI*2);
@@ -198,8 +196,7 @@ public class Player {
         yVel += (sp*yintent - yVel)*0.03;
         lastX = x;
         lastY = y;
-        x += xVel;
-        y += yVel;
+        tryToMove(xVel,yVel);
 
         int rotIntent = 0;
         if(controller.held(SnesController.LTRIGGER)){
@@ -231,6 +228,10 @@ public class Player {
                         rVel *= 0.5;
                     }
                 }
+                if(modules[i].projectile != null){
+                    xVel *= 0.9;
+                    yVel *= 0.9;
+                }
             }
         }
         for(int i = 0; i < 4; i ++){
@@ -247,10 +248,40 @@ public class Player {
             HitboxPoint[] hitboxFrame = modules[i].getHitbox();
             for(int j = 0; j < hitboxFrame.length; j ++){
                 Point rotatedPoint = Calcs.rotatePoint(hitboxFrame[j].x + x-40,hitboxFrame[j].y + y-120,x,y,Math.toDegrees(rotation)+i*90);
-                hitboxes[hitboxNum] = new HitboxPoint(rotatedPoint.x,rotatedPoint.y,hitboxFrame[j].radius,
-                        hitboxFrame[j].type,hitboxFrame[j].intensity,hitboxFrame[j].parent);
+                
+                if(hitboxFrame[j].type == 3 && modules[i].frameTimer == 1){
+                    
+                    double projectileRotation = rotation + i * Math.PI / 2 - Math.PI / 2;
+                    
+                    float velocityX = (float)Math.cos(projectileRotation)*7;
+                    float velocityY = (float)Math.sin(projectileRotation)*7;
+                    
+                    game.projectiles.add(new Projectile(rotatedPoint.x,rotatedPoint.y,velocityX + xVel,
+                            velocityY + yVel,modules[i].projectile,projectileRotation, playerNum));
+                }
+                    hitboxes[hitboxNum] = new HitboxPoint(rotatedPoint.x,rotatedPoint.y,hitboxFrame[j].radius,
+                            hitboxFrame[j].type,hitboxFrame[j].intensity,hitboxFrame[j].parent);
                 hitboxNum ++;
             }
+        }
+    }
+    
+    public void tryToMove(float moveX, float moveY){
+        if(x + moveX >= Game.WINDOW_WIDTH/2 - 40){
+            if(xVel > 0)xVel = -xVel;
+        }
+        else if(x + moveX <= - Game.WINDOW_WIDTH/2 + 40){
+            if(xVel < 0)xVel = -xVel;
+        }
+        if(y + moveY >= Game.WINDOW_HEIGHT/2- 40){
+            if(yVel > 0)yVel = -yVel;
+        }
+        else if(y + moveY <= - Game.WINDOW_HEIGHT/2 + 40){
+            if(yVel < 0)yVel = -yVel;
+        }
+        else{
+            x += moveX;
+            y += moveY; 
         }
     }
 
@@ -260,29 +291,38 @@ public class Player {
             addPause(damage);
             return;
         }
+        double knockback = Math.pow(damage,3/4f)*1.2f*Math.pow(this.damage+100, 1/4f)/Math.pow(100,1/4f);
+        
         pause = damage*2;
         maxPause = damage*2;
         
         //calculate direction
         
-        xVel += (float)Math.cos(direction)*damage/2;
-        yVel += (float)Math.sin(direction)*damage/2;
+        xVel += (float)(Math.cos(direction)*knockback);
+        yVel += (float)(Math.sin(direction)*knockback);
         
         direction = Math.atan2(yVel, xVel);
-        jitterX = (float)Math.cos(direction)*damage/2;
-        jitterY = (float)Math.sin(direction)*damage/2;
+        jitterX = (float)Math.abs(Math.cos(direction)*knockback);
+        jitterY = (float)Math.abs(Math.sin(direction)*knockback);
         
-        if(this.damage > 60){
-            deathVelocity = (float)(Math.pow(this.damage-60,3/4f)*damage/(float)280);
-            if(deathVelocity < 0.3)deathVelocity = 0;
-            else{
-                mashButton = Players.random.nextInt(4);
+        if(type != 2){
+            if(this.damage > 60){
+                deathVelocity = (float)(Math.pow((this.damage-60)*Math.pow(damage,1/2f),1/2f)/12);
+                System.out.println(deathVelocity);
+                if(deathVelocity < 0.3)deathVelocity = 0;
+                else{
+                    mashButton = Players.random.nextInt(4);
+                }
+                if(rVel > 0)spinDirection = 1;
+                else spinDirection = -1;
             }
-            if(rVel > 0)spinDirection = 1;
-            else spinDirection = -1;
-        }
 
-        this.damage += damage;
+            this.damage += damage;
+        }
+        else{
+            int dir = Math.round(rotation/Math.abs(rotation));
+            rVel = maxRotSpeed*3*dir;
+        }
     }
     
     public void addPause(int damageDealt){
@@ -303,10 +343,12 @@ public class Player {
     public void renderGame(Graphics2D g){
         
         if(!alive){
+//            g.drawImage(Players.charredRemains, (int)x-60,(int)y-60,120,120,null);
             return;
         }
         
         if(explosionFrame > 0){
+//            g.drawImage(Players.charredRemains, (int)x-60,(int)y-60,120,120,null);
             g.drawImage(Players.explosion[explosionFrame], (int)x - 120,(int)y-120,null);
             
             
@@ -319,8 +361,10 @@ public class Player {
         float y2 = this.y;
         
         if(pause > 0 && (Math.abs(jitterX) > 0 || Math.abs(jitterY) > 0)){
-            x2 += jitterX*((float)pause/maxPause);
-            y2 += jitterY*((float)pause/maxPause);
+            
+            float dir = Players.random.nextFloat(2f);
+            x2 += (jitterX - dir * jitterX)*((float)pause/maxPause);
+            y2 += (jitterY - dir * jitterY)*((float)pause/maxPause);
         }
         else if(deathVelocity > 0|| deathLevel > 0){
             float dist = deathLevel*8/100f + Players.random.nextFloat((deathLevel+0.01f)*2/100);
@@ -374,6 +418,7 @@ public class Player {
             g.translate(-x2+x, -y2+x);
             gFlash.dispose();
 
+            g.drawImage(Players.shadow, (int)x2-50,(int)y2-50, null);
             // 4. Draw the result to the main graphics context
             g.drawImage(playerBuffer, (int)x2 - 120, (int)y2 - 120, null);
 
@@ -391,6 +436,7 @@ public class Player {
         } else {
             // Draw player and modules as before if not flashing
             g.translate(x2, y2);
+            g.drawImage(Players.shadow, -50,-50, null);
             g.rotate(rotation);
             for (int i = 0; i < 4; i++) {
                 BufferedImage image = modules[i].getImage();
@@ -419,6 +465,7 @@ public class Player {
                 g.drawImage(Players.sparks[sparkFrame], -60,-60, null);
             g.translate(-x2,-y2);
         }
+            
         if(DRAW_HITBOXES){
             int lastType = -1;
             for(int i = 0; i < hitboxes.length; i ++){

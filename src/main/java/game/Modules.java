@@ -34,13 +34,13 @@ public class Modules {
         if(!hitboxes.isEmpty()) damages = hitboxes.get(0).split(",");
         else damages = new String[0];
         
-        modules[0] = new Module("spike", safelyGetString(hitboxes,1), 8, safelyGetValue(damages,0),0);
+        modules[0] = new Module("spike", safelyGetString(hitboxes,1), 9, safelyGetValue(damages,0),0);
         modules[1] = new Module("spear", safelyGetString(hitboxes,2), 23, safelyGetValue(damages,1),1);
-        modules[2] = new Module("saw", safelyGetString(hitboxes,3), 38, safelyGetValue(damages,2),2);
-        modules[3] = new Module("shield", safelyGetString(hitboxes,4), 31, safelyGetValue(damages,3),3);
-        modules[4] = new Module("quickshield", safelyGetString(hitboxes,5), 11, safelyGetValue(damages,4),4);
-        modules[5] = new Module("shooter", safelyGetString(hitboxes,6), 9, safelyGetValue(damages,5),5);
-        modules[6] = new Module("reflector", safelyGetString(hitboxes,7), 14, safelyGetValue(damages,6),6);
+        modules[2] = new Module("saw", safelyGetString(hitboxes,3), 26, safelyGetValue(damages,2),2);
+        modules[3] = new Module("shield", safelyGetString(hitboxes,4), 32, safelyGetValue(damages,3),3);
+        modules[4] = new Module("quickshield", safelyGetString(hitboxes,5), 12, safelyGetValue(damages,4),4);
+        modules[5] = new Module("shooter", safelyGetString(hitboxes,6), 10, safelyGetValue(damages,5),5);
+        modules[6] = new Module("reflector", safelyGetString(hitboxes,7), 13, safelyGetValue(damages,6),6);
         
         return modules;
     }

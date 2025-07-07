@@ -3,6 +3,7 @@ package game;
 import engine.framework.Engine;
 import engine.framework.MultiState;
 import engine.graphics.Text;
+import engine.graphics.Textures;
 import engine.input.ControllerHandler;
 import engine.input.SnesController;
 
@@ -17,6 +18,9 @@ import java.util.Random;
  */
 public class Game extends Engine {
     
+    public static int WINDOW_WIDTH = 1600;
+    public static int WINDOW_HEIGHT = 900;
+    
     Module[] modules;
     MultiState state;
 
@@ -29,6 +33,7 @@ public class Game extends Engine {
     ArrayList<Float> playerMiceAcc;
     ArrayList<Float[]> playerMice;
     ArrayList<Integer> playerHover;
+    ArrayList<Projectile> projectiles;
 
     Text text;
     Text text2;
@@ -39,10 +44,13 @@ public class Game extends Engine {
     int winner;
     
     Random random;
+    
+    BufferedImage map;
 
     public Game(){
         init();
-        this.start("HodgePodgeRobotBarrage", 1600, 900, false);
+        map =  Textures.loadImage("/textures/maps/demo.png");
+        this.start("HodgePodgeRobotBarrage", 1600, 900, true);
     }
     
     public void init(){
@@ -61,6 +69,7 @@ public class Game extends Engine {
         playerMice = new ArrayList<>();
         playerHover = new ArrayList<>();
         controllers = new ArrayList<>();
+        projectiles = new ArrayList<>();
         timer = 1;
         winner = -1;
     }
@@ -73,7 +82,7 @@ public class Game extends Engine {
             if(timer == 0){
                 getPlayers();
                 while(controllers.size() > players.size()){
-                    players.add(new Player());
+                    players.add(new Player(this));
                     playerSelections.add(new Integer[]{-1,-1,-1,-1});
                     centerSelections.add(0);
                     playerMiceAcc.add(0f);
@@ -228,6 +237,12 @@ public class Game extends Engine {
                         if(players.get(i).alive)winner = i;
                     }
                 }
+                int tbr = -1;
+                for(int i = 0; i < projectiles.size(); i ++){
+                    projectiles.get(i).tick();
+                    if(projectiles.get(i).timer <= 0)tbr = i;
+                }
+                if(tbr >= 0)projectiles.remove(tbr);
                 if(restart){
                     init();
                 }
@@ -267,7 +282,7 @@ public class Game extends Engine {
                 }
                 break;
             case 2:
-
+                this.setHints(g);
                 float scale = window.getHeight() / 1400f;
                 float offset = (window.getWidth() / scale - 3600) / 2;
 
@@ -311,15 +326,20 @@ public class Game extends Engine {
 
                 g.setColor(Color.white);
                 g.fillRect(0, 0, width, height);
-
-                drawStats(g);
+                
                 g.translate(width / 2, height / 2);
+                g.drawImage(map, -WINDOW_WIDTH/2 -50, -WINDOW_HEIGHT/2-50,null);
+                drawStats(g);
                 for (int i = 0; i < players.size(); i++) {
                     players.get(i).renderGame(g);
                 }
                 checkCollisions();
                 if(winner >= 0){
-                    text2.drawString(0, 0, "PLAYER "+winner+" WINS!", g);
+                    text2.drawString(0, 0, "PLAYER "+(winner+1)+" WINS!", g);
+                }
+                
+                for (Projectile projectile : projectiles) {
+                    g.drawImage(projectile.image, (int)projectile.x,(int)projectile.y, null);
                 }
                 break;
             case 4:
@@ -363,139 +383,334 @@ public class Game extends Engine {
 
         int width = window.getWidth();
         int height = window.getHeight();
+        g.translate(-(int)(width/2f), -(int)(height/2f));
 
-//        text2.drawString(0, 0, (String) ("Player 1: " + players.get(0).damage).replace('0', 'O'), 1, -1, g);
-//        if(players.size() <= 1)return;
-//        text2.drawString(width, 0, (String) ("Player 2: " + players.get(1).damage).replace('0', 'O'), -1, -1, g);
-//        if(players.size() <= 2)return;
-//        text2.drawString(0, height, (String) ("Player 3: " + players.get(2).damage).replace('0', 'O'), 1, 1, g);
-//        if(players.size() <= 3)return;
-//        text2.drawString(width, height, (String) ("Player 4: " + players.get(3).damage).replace('0', 'O'), -1, 1, g);
+        text2.drawString(10, 10, (String) ("Player 1: " + players.get(0).damage).replace('0', 'O'), 1, -1, g);
+        if(players.size() > 1){
+            text2.drawString(width -10, 10, (String) ("Player 2: " + players.get(1).damage).replace('0', 'O'), -1, -1, g);
+            if(players.size() > 2){
+                text2.drawString(10, height-10, (String) ("Player 3: " + players.get(2).damage).replace('0', 'O'), 1, 1, g);
+                if(players.size() > 3)
+                text2.drawString(width-10, height-10, (String) ("Player 4: " + players.get(3).damage).replace('0', 'O'), -1, 1, g);
+            }
+        }
+        
+        g.translate((int)(width/2f),(int)(height/2f));
 
     }
+//
+//    public void checkCollisions() {
+//
+//        for (int i = 0; i < players.size(); i++) {
+//            Player p1 = players.get(i);
+//            if (p1.hitboxes == null || !p1.alive)
+//                continue;
+//            for (int j = i + 1; j < players.size(); j++) {
+//                Player p2 = players.get(j);
+//                if (p2.hitboxes == null || !p1.alive)
+//                    continue;
+//
+//                boolean playersCollided = false;
+//                HitboxPoint p1defend = null;
+//                HitboxPoint p2attack = null;
+//                HitboxPoint p2defend = null;
+//                HitboxPoint p1attack = null;
+//                boolean noCollision = false;
+//
+//                for (int h1 = 0; h1 < p1.hitboxes.length; h1++) {
+//                    HitboxPoint hb1;
+//                    if(h1 < p1.hitboxes.length) hb1 = p1.hitboxes[h1];
+//                    else hb1 = p1.projectiles.get(h1-p1.hitboxes.length).getHitbox();
+//                    for (int h2 = 0; h2 < p2.hitboxes.length + p2.projectiles.size(); h2++) {
+//                        HitboxPoint hb2;
+//                        if(h2 < p2.hitboxes.length)hb2 = p2.hitboxes[h2];
+//                        else hb2 = p2.projectiles.get(h2-p2.hitboxes.length).getHitbox();
+//
+//                        // Check collision
+//                        double dx = hb1.x - hb2.x;
+//                        double dy = hb1.y - hb2.y;
+//                        double distSq = dx * dx + dy * dy;
+//                        double radSum = hb1.radius + hb2.radius;
+//                        if (distSq < radSum * radSum) {
+//
+//                            if((hb1.type == 0 || hb1.type == 4 )&& hb2.projectileParent != null){
+//                                if(hb1.type == 0){
+//                                    p1.takeDamage((int) (hb2.intensity * hb1.intensity/ 100),
+//                                            6, hb2.projectileParent.rotation);
+//                                    hb2.projectileParent.timer = -1;
+//                                }
+//                                else{
+//                                    hb2.projectileParent.timer = -1;
+//                                    p1.projectiles.add(hb2.projectileParent.reflect());
+//                                }
+//                            }
+//                            else if((hb2.type == 0  || hb2.type == 4 )&& hb1.projectileParent != null){
+//                                if(hb2.type == 0){
+//                                    p2.takeDamage((int) (hb1.intensity * hb2.intensity/ 100),
+//                                            6, hb1.projectileParent.rotation);
+//                                    hb1.projectileParent.timer = -1;
+//                                }
+//                                else{
+//                                    hb1.projectileParent.timer = -1;
+//                                    p2.projectiles.add(hb1.projectileParent.reflect());
+//                                }
+//                            }
+//                            else{
+//                                playersCollided = true;
+//                                
+//                                if ((hb1.type == 1 || hb1.type == 10) && (hb2.type == 0 || hb2.type == 2)) {
+//                                    if (p1attack == null || ((hb1.intensity > p1attack.intensity || hb2.type == 2) && p2defend.type != 2)) {
+//                                        p1attack = hb1;
+//                                        p2defend = hb2;
+//                                    }
+//                                }
+//                                if ((hb1.type == 0|| hb1.type == 2) && (hb2.type == 1 || hb2.type == 10)) {
+//                                    if (p2attack == null || ((hb2.intensity > p2attack.intensity || hb1.type == 2) && p1defend.type != 2)) {
+//                                        p2attack = hb2;
+//                                        p1defend = hb1;
+//                                    }
+//                                }
+//                            }
+//                            // collide
+//                        }
+//                    }
+//                }
+//
+//                if (playersCollided) {
+//
+//                    if (!p1.intersecting.contains(p2)) {
+//                        p1.intersecting.add(p2);
+//                    }
+//                    if (!p2.intersecting.contains(p1)) {
+//
+//                        p2.intersecting.add(p1);
+//
+//                        
+//                        if (p1attack != null && p2defend != null && p1attack.type == 10) {
+//                            double rotation = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+//                            int damage = 5;
+//                            if (p1attack.radius > 90)
+//                                damage = 20;
+//                            p2.takeDamage((int) (p1attack.intensity * p2defend.intensity * damage / 10000),
+//                                    p1attack.type, rotation);
+//                            p2.rVel = -p1.rVel / 3;
+//                            continue;
+//                        }
+//                        if (p2attack != null && p1defend != null && p2attack.type == 10) {
+//                            double rotation = Math.atan2(p1.y - p2.y, p1.x - p2.x);
+//                            int damage = 5;
+//                            if (p2attack.radius > 90)
+//                                damage = 15;
+//                            p1.takeDamage((int) (p2attack.intensity * p1defend.intensity * damage / 10000),
+//                                    p2attack.type, rotation);
+//                            p1.rVel = -p2.rVel / 3;
+//                            continue;
+//                        }
+//
+//                        p1.revertPos();
+//                        p2.revertPos();
+//                        float p1x = p1.xVel;
+//                        float p1y = p1.yVel;
+//                        p1.xVel = p2.xVel;
+//                        p1.yVel = p2.yVel;
+//                        p2.xVel = p1x;
+//                        p2.yVel = p1y;
+//                        float p1r = p1.rVel;
+//                        p1.rVel = -p2.rVel;
+//                        p2.rVel = -p1r;
+//                        
+//                        if (p1attack != null && p2defend != null) {
+//                            if(p2defend.type == 2){
+//                                int moduleNum = getModuleIndexForHitbox(p2, p2defend);
+//                                double rotation = p2.rotation + moduleNum * Math.PI / 2 - Math.PI / 2;
+//                                p1.takeDamage(
+//                                        (int) (p1attack.intensity  * p1attack.parent.damage / 100),
+//                                        p2defend.type, rotation);
+//                            }
+//                            else{
+//                                int moduleNum = getModuleIndexForHitbox(p1, p1attack);
+//                                double rotation = p1.rotation + moduleNum * Math.PI / 2 - Math.PI / 2;
+//                                p2.takeDamage(
+//                                        (int) (p1attack.intensity * p2defend.intensity * p1attack.parent.damage / 10000),
+//                                        p1attack.type, rotation);
+//                                p1.addPause(
+//                                        (int) (p1attack.intensity * p2defend.intensity * p1attack.parent.damage / 10000));
+//                            }
+//                        }
+//                        if (p2attack != null && p1defend != null) {
+//                            if(p1defend.type == 2){
+//                                int moduleNum = getModuleIndexForHitbox(p1, p1defend);
+//                                double rotation = p1.rotation + moduleNum * Math.PI / 2 - Math.PI / 2;
+//                                p2.takeDamage(
+//                                        (int) (p2attack.intensity  * p2attack.parent.damage / 100),
+//                                        p1defend.type, rotation);
+//                            }
+//                            else{
+//                                int moduleNum = getModuleIndexForHitbox(p2, p2attack);
+//                                double rotation = p2.rotation + moduleNum * Math.PI / 2 - Math.PI / 2;
+//                                p1.takeDamage(
+//                                        (int) (p2attack.intensity * p1defend.intensity * p2attack.parent.damage / 10000),
+//                                        p2attack.type, rotation);
+//                                p2.addPause(
+//                                        (int) (p2attack.intensity * p1defend.intensity * p2attack.parent.damage / 10000));
+//                            }
+//                        }
+//                    }
+//
+//                } else {
+//                    if (p1.intersecting.contains(p2)) {
+//                        p1.intersecting.remove(p2);
+//                    }
+//                    if (p2.intersecting.contains(p1)) {
+//                        p2.intersecting.remove(p1);
+//                    }
+//                }
+//            }
+//        }
+//    }
+    
+    private boolean hitboxesCollide(HitboxPoint a, HitboxPoint b) {
+        double dx = a.x - b.x;
+        double dy = a.y - b.y;
+        double radSum = a.radius + b.radius;
+        return dx * dx + dy * dy < radSum * radSum;
+    }
 
+    private void handleProjectileCollision(Player player, HitboxPoint hb, Projectile proj) {
+        // Hurtbox (0) takes damage, Reflector (4) reflects
+        if (hb.type == 0) {
+            player.takeDamage((int)(proj.damage * hb.intensity / 100), 6, proj.rotation);
+            proj.timer = -1;
+        } else if (hb.type == 4) {
+            proj.timer = -1;
+            projectiles.add(new Projectile(proj.x, proj.y, -proj.xVel, -proj.yVel, proj.image, proj.rotation + Math.PI, player.playerNum));
+        }
+    }
+
+    private void handlePlayerCollision(Player attacker, Player defender, HitboxPoint atk, HitboxPoint def) {
+        int atkModule = getModuleIndexForHitbox(attacker, atk);
+        int defModule = getModuleIndexForHitbox(defender, def);
+        double atkDir = attacker.rotation + atkModule * Math.PI / 2 - Math.PI / 2;
+        double defDir = defender.rotation + defModule * Math.PI / 2 - Math.PI / 2;
+
+        if (def.type == 2) { // Shield
+            attacker.takeDamage((int)(atk.intensity * atk.parent.damage / 100), def.type, defDir);
+        } else {
+            int dmg = (int)(atk.intensity * def.intensity * atk.parent.damage / 10000);
+            defender.takeDamage(dmg, atk.type, atkDir);
+            attacker.addPause(dmg);
+        }
+    }
+
+    private boolean isAttack(HitboxPoint hb) {
+        return hb.type == 1 || hb.type == 10;
+    }
     public void checkCollisions() {
-
+    // Player vs Player
         for (int i = 0; i < players.size(); i++) {
             Player p1 = players.get(i);
-            if (p1.hitboxes == null || !p1.alive)
-                continue;
+            if (p1.hitboxes == null || !p1.alive) continue;
             for (int j = i + 1; j < players.size(); j++) {
                 Player p2 = players.get(j);
-                if (p2.hitboxes == null || !p1.alive)
-                    continue;
+                if (p2.hitboxes == null || !p2.alive) continue;
 
-                boolean playersCollided = false;
-                HitboxPoint p1defend = null;
-                HitboxPoint p2attack = null;
-                boolean invincibleP1 = false;
-                HitboxPoint p2defend = null;
-                HitboxPoint p1attack = null;
-                boolean invincibleP2 = false;
+                boolean collided = false;
+                HitboxPoint p1Attack = null, p1Defend = null, p2Attack = null, p2Defend = null;
 
-                for (int h1 = 0; h1 < p1.hitboxes.length; h1++) {
-                    HitboxPoint hb1 = p1.hitboxes[h1];
-                    for (int h2 = 0; h2 < p2.hitboxes.length; h2++) {
-                        HitboxPoint hb2 = p2.hitboxes[h2];
+                for (HitboxPoint hb1 : p1.hitboxes) {
+                    for (HitboxPoint hb2 : p2.hitboxes) {
+                        if (!hitboxesCollide(hb1, hb2)) continue;
 
-                        // Check collision
-                        double dx = hb1.x - hb2.x;
-                        double dy = hb1.y - hb2.y;
-                        double distSq = dx * dx + dy * dy;
-                        double radSum = hb1.radius + hb2.radius;
-                        if (distSq < radSum * radSum) {
-
-                            playersCollided = true;
-
-                            if ((hb1.type == 1 || hb1.type == 10) && hb2.type == 0) {
-                                if (p1attack == null || hb1.intensity > p1attack.intensity) {
-                                    p1attack = hb1;
-                                    p2defend = hb2;
-                                }
+                        // Attack/Defend logic
+                        if ((hb1.type == 1 || hb1.type == 10) && (hb2.type == 0 || hb2.type == 2)) {
+                            if (p1Attack == null || hb1.intensity > p1Attack.intensity || hb2.type == 2) {
+                                p1Attack = hb1;
+                                p2Defend = hb2;
                             }
-                            if (hb1.type == 0 && (hb2.type == 1 || hb2.type == 10)) {
-                                if (p2attack == null || hb2.intensity > p2attack.intensity) {
-                                    p2attack = hb2;
-                                    p1defend = hb1;
-                                }
-                            }
-                            // collide
                         }
+                        if ((hb2.type == 1 || hb2.type == 10) && (hb1.type == 0 || hb1.type == 2)) {
+                            if (p2Attack == null || hb2.intensity > p2Attack.intensity || hb1.type == 2) {
+                                p2Attack = hb2;
+                                p1Defend = hb1;
+                            }
+                        }
+                        collided = true;
                     }
                 }
 
-                if (playersCollided) {
-
-                    if (!p1.intersecting.contains(p2)) {
-                        p1.intersecting.add(p2);
+                if (collided) {
+                    if (!p1.intersecting.contains(p2)) p1.intersecting.add(p2);
+                    if (!p2.intersecting.contains(p1)) p2.intersecting.add(p1);
+                    else continue;
+                    // Special attack type 10
+                    if (p1Attack != null && p2Defend != null && p1Attack.type == 10) {
+                        double rot = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+                        int dmg = (p1Attack.radius > 90) ? 20 : 5;
+                        p2.takeDamage((int)(p1Attack.intensity * p2Defend.intensity * dmg / 10000), p1Attack.type, rot);
+                        p2.rVel = -p1.rVel / 3;
+                        continue;
                     }
-                    if (!p2.intersecting.contains(p1)) {
-
-                        p2.intersecting.add(p1);
-
-                        if (p1attack != null && p2defend != null && p1attack.type == 10) {
-                            double rotation = Math.atan2(p2.y - p1.y, p2.x - p1.x);
-                            int damage = 5;
-                            if (p1attack.radius > 90)
-                                damage = 20;
-                            p2.takeDamage((int) (p1attack.intensity * p2defend.intensity * damage / 10000),
-                                    p1attack.type, rotation);
-                            p2.rVel = -p1.rVel / 3;
-                            continue;
-                        }
-                        if (p2attack != null && p1defend != null && p2attack.type == 10) {
-                            double rotation = Math.atan2(p1.y - p2.y, p1.x - p2.x);
-                            int damage = 5;
-                            if (p2attack.radius > 90)
-                                damage = 15;
-                            p1.takeDamage((int) (p2attack.intensity * p1defend.intensity * damage / 10000),
-                                    p2attack.type, rotation);
-                            p1.rVel = -p2.rVel / 3;
-                            continue;
-                        }
-
-                        p1.revertPos();
-                        p2.revertPos();
-                        float p1x = p1.xVel;
-                        float p1y = p1.yVel;
-                        p1.xVel = p2.xVel;
-                        p1.yVel = p2.yVel;
-                        p2.xVel = p1x;
-                        p2.yVel = p1y;
-                        float p1r = p1.rVel;
-                        p1.rVel = -p2.rVel;
-                        p2.rVel = -p1r;
-
-                        if (p1attack != null && p2defend != null) {
-                            int moduleNum = getModuleIndexForHitbox(p1, p1attack);
-                            double rotation = p1.rotation + moduleNum * Math.PI / 2 - Math.PI / 2;
-                            p2.takeDamage(
-                                    (int) (p1attack.intensity * p2defend.intensity * p1attack.parent.damage / 10000),
-                                    p1attack.type, rotation);
-                            p1.addPause(
-                                    (int) (p1attack.intensity * p2defend.intensity * p1attack.parent.damage / 10000));
-                        }
-                        if (p2attack != null && p1defend != null) {
-                            int moduleNum = getModuleIndexForHitbox(p2, p2attack);
-                            double rotation = p2.rotation + moduleNum * Math.PI / 2 - Math.PI / 2;
-                            p1.takeDamage(
-                                    (int) (p2attack.intensity * p1defend.intensity * p2attack.parent.damage / 10000),
-                                    p2attack.type, rotation);
-                            p2.addPause(
-                                    (int) (p2attack.intensity * p1defend.intensity * p2attack.parent.damage / 10000));
-                        }
+                    if (p2Attack != null && p1Defend != null && p2Attack.type == 10) {
+                        double rot = Math.atan2(p1.y - p2.y, p1.x - p2.x);
+                        int dmg = (p2Attack.radius > 90) ? 15 : 5;
+                        p1.takeDamage((int)(p2Attack.intensity * p1Defend.intensity * dmg / 10000), p2Attack.type, rot);
+                        p1.rVel = -p2.rVel / 3;
+                        continue;
                     }
 
+                    // Swap velocities and revert positions
+                    p1.revertPos(); p2.revertPos();
+                    float tmpX = p1.xVel, tmpY = p1.yVel, tmpR = p1.rVel;
+                    p1.xVel = p2.xVel; p1.yVel = p2.yVel; p1.rVel = -p2.rVel;
+                    p2.xVel = tmpX; p2.yVel = tmpY; p2.rVel = -tmpR;
+
+                    // Handle attack/defend
+                    if (p1Attack != null && p2Defend != null) handlePlayerCollision(p1, p2, p1Attack, p2Defend);
+                    if (p2Attack != null && p1Defend != null) handlePlayerCollision(p2, p1, p2Attack, p1Defend);
                 } else {
-                    if (p1.intersecting.contains(p2)) {
-                        p1.intersecting.remove(p2);
+                    p1.intersecting.remove(p2);
+                    p2.intersecting.remove(p1);
+                }
+            }
+        }
+        for (Projectile proj : new ArrayList<>(projectiles)) {
+            if (proj.timer <= 0) continue;
+            for (int i = 0; i < players.size(); i++) {
+                if (i == proj.parent) continue; // Immune to own projectiles
+                Player player = players.get(i);
+                if (player.hitboxes == null || !player.alive) continue;
+
+                boolean attackCollision = false;
+
+                // First pass: check for attack hitbox collision
+                for (HitboxPoint hb : player.hitboxes) {
+                    if (hitboxesCollide(hb, proj.getHitbox()) && isAttack(hb)) {
+                        attackCollision = true;
+                        break;
                     }
-                    if (p2.intersecting.contains(p1)) {
-                        p2.intersecting.remove(p1);
+                }
+
+                if (attackCollision) {
+                    proj.timer = -1;
+                    players.get(i).xVel += proj.xVel * 0.5f; // Apply some knockback
+                    players.get(i).yVel += proj.yVel * 0.5f; // Apply some knockback
+                    continue; // Don't apply damage or reflect
+                }
+
+                // Second pass: check for other collisions (vulnerable, reflector, etc)
+                for (HitboxPoint hb : player.hitboxes) {
+                    if (hitboxesCollide(hb, proj.getHitbox())) {
+                        handleProjectileCollision(player, hb, proj);
+                        break;
                     }
                 }
             }
         }
+    }
+    
+    public boolean handleError(Exception e){
+        init();
+        return true;
     }
 
     private int getModuleIndexForHitbox(Player player, HitboxPoint hitbox) {

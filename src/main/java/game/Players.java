@@ -28,6 +28,7 @@ public class Players {
     public static BufferedImage[] centerOverlays;
     public static BufferedImage highlight;
     public static Boolean[] centersTilted;
+    public static BufferedImage shadow;
     
     public static void loadImages(){
         
@@ -89,6 +90,7 @@ public class Players {
         }
         
         charredRemains = Textures.loadImage("/textures/players/CharredRemains.png");
+        shadow = Textures.loadImage("/textures/players/shadow.png");
     }
     
 }

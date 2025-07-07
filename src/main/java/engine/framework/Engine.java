@@ -31,6 +31,7 @@ public abstract class Engine extends Canvas implements Runnable{
         window.start(this);
         this.createBufferStrategy(3);
         
+        
         new Thread() {
             public void run() {
                 load();
@@ -56,32 +57,40 @@ public abstract class Engine extends Canvas implements Runnable{
 
         while (true){
             
-            long st = System.currentTimeMillis();
-
-            tick();
-            if(!dropFrame)render();
-            
-            tickTimer ++;
-            if(tickTimer > tps)tickTimer = 0;
-            
             try {
-                long ticktime = time_per_tick - (System.currentTimeMillis()-st);
-                sumTime += (System.currentTimeMillis()-st);
+                long st = System.currentTimeMillis();
 
-                dropFrame = false;
-                if(ticktime < 0) {
-                	dropFrame = true;
+                tick();
+                if(!dropFrame)render();
+
+                tickTimer ++;
+                if(tickTimer > tps)tickTimer = 0;
+
+                try {
+                    long ticktime = time_per_tick - (System.currentTimeMillis()-st);
+                    sumTime += (System.currentTimeMillis()-st);
+
+                    dropFrame = false;
+                    if(ticktime < 0) {
+                            dropFrame = true;
+                    }
+
+                    if(tickTimer == 0) {
+    //                    System.out.println(((sumTime/(float)tps)/time_per_tick)*100 + "%");
+                        sumTime = 0;
+                        tickTimer = 0;
+                    }
+
+                    Thread.sleep(Math.max(ticktime,0));
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(Engine.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+            catch (Exception e){
+                if(!this.handleError(e)){
+                    break;
                 }
                 
-                if(tickTimer == 0) {
-//                    System.out.println(((sumTime/(float)tps)/time_per_tick)*100 + "%");
-                    sumTime = 0;
-                    tickTimer = 0;
-                }
-                
-                Thread.sleep(Math.max(ticktime,0));
-            } catch (InterruptedException ex) {
-                Logger.getLogger(Engine.class.getName()).log(Level.SEVERE, null, ex);
             }
             
         }
@@ -112,6 +121,10 @@ public abstract class Engine extends Canvas implements Runnable{
     
     public void render(Graphics2D g){
         
+    }
+    
+    public boolean handleError(Exception e){
+        return false;
     }
     
     public void setHints(Graphics2D g){

@@ -18,6 +18,7 @@ public class HitboxPoint {
     int type;
     int intensity;
     public Hitbox parent;
+    public Projectile projectileParent;
     
     public HitboxPoint(String string, Hitbox parent){
         String[] arr = string.split(",");
@@ -41,8 +42,13 @@ public class HitboxPoint {
     public HitboxPoint() {
         this(0, 0, 0, 0, 0, null);
     }
-    public HitboxPoint(Point p, int radius, int type, int intensity) {
-        this(p.x, p.y, radius, type, intensity, null);
+    public HitboxPoint(int x, int y, int radius, int type, int intensity, Projectile parent, boolean isProjectile) {
+        this.x = x;
+        this.y = y;
+        this.radius = radius;
+        this.type = type;
+        this.intensity = intensity;
+        this.projectileParent = parent;
     }
     public HitboxPoint(int x, int y, int radius, int type, int intensity, Hitbox parent) {
         this.x = x;
