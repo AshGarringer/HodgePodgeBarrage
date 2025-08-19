@@ -41,7 +41,6 @@ public abstract class BasicEngine extends Canvas implements Runnable{
             long st = System.currentTimeMillis();
             
             tick();
-            render();
             
             sync_timer ++;
             if(sync_timer > 60)sync_timer = 0;
@@ -63,20 +62,4 @@ public abstract class BasicEngine extends Canvas implements Runnable{
 
     public abstract void tick();
     
-    private void render() {
-        BufferStrategy bs = this.getBufferStrategy();
-        if (bs == null) {
-            this.createBufferStrategy(3);
-            return;
-        }
-        graphics = bs.getDrawGraphics();
-        
-        render(graphics);
-        
-        graphics.dispose();
-        bs.show();
-        if(sync_timer == 0)Toolkit.getDefaultToolkit().sync();
-    }
-    
-    public abstract void render(Graphics g);
 }

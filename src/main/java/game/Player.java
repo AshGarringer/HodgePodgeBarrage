@@ -4,11 +4,11 @@
  */
 package game;
 
-import engine.graphics.Textures;
 import engine.input.SnesController;
 import engine.logic.Calcs;
 import java.awt.AlphaComposite;
 import java.awt.Color;
+import java.awt.Composite;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.image.BufferedImage;
@@ -32,7 +32,6 @@ public class Player {
     
     Game game;
     
-    Integer[] selected;
     Module[] modules;
     Integer center;
     HitboxPoint[] hitboxes;
@@ -56,10 +55,16 @@ public class Player {
     
     int damageFrame = 0;
     
+    boolean mash = false;
+    // skill check
+    int numButtons = 0;
+    int nextMashButton = 0;
+    // mash & skill check
     float deathVelocity = 0;
     float deathLevel = 0;
-    
     int mashButton = 0;
+    double lastPressTime = 0;
+    
     int spinDirection = 0;
     
     int mashFrame = 0;
@@ -70,34 +75,156 @@ public class Player {
     boolean alive = true;
     
     ArrayList<Player> intersecting;
+    
+    SnesController controller;
+    
+    Integer[] moduleSelections;
+    Float[] mouse;
+    Integer playerHover;
 
-    public Player(Game game){
+    public Player(Game game, int controllerId, Integer playerNum){
         x = 0;
         y = 0;
         rotation = 0;
         xVel = 0;
         yVel = 0;
         rVel = 0;
-        damage = 0;
+        damage = 80;
         maxPause = 0;
         intersecting = new ArrayList<>();
-        this.game = game;
-    }
-    
-    public void tickMenu(SnesController controller){
-        
-    }
-    
-    public void init(Module[] modules, int center, Integer playerNum){
-        this.modules = modules;
-        this.center = center;
+        controller = new SnesController(controllerId);
         this.playerNum = playerNum;
+        this.game = game;
+        initMenu();
+    }
+    
+    public final void initMenu(){
+        mouse = new Float[]{1220f + (playerNum % 2) * 1160,375f + (playerNum / 2) * 650};
+        moduleSelections = new Integer[]{-1,-1,-1,-1};
+        playerHover = -1;
+        center = 0;
+    }
+    
+    public final void initGame(){
+        this.modules = Modules.loadModuleSelection(moduleSelections);
         if(Players.centersTilted[center])rotation -= (float)Math.PI/4f;
         x = -200 + 400*(playerNum%2);
         y = -200 + 400*(playerNum/2);
     }
     
-    public void tickGame(SnesController controller){
+    public void tickMenu(){
+        
+        controller.clearPressed();
+        controller.update();
+
+        if(controller.pressed(SnesController.LTRIGGER)){
+            center = (center -1 + Players.centers.length)%Players.centers.length;
+        }
+        if(controller.pressed(SnesController.RTRIGGER)){
+            center = (center +1 + Players.centers.length)%Players.centers.length;;
+        }
+
+        int xintent = 0;
+        int yintent = 0;
+
+        if(controller.held(SnesController.UP)){
+            yintent --;
+        }
+        if(controller.held(SnesController.DOWN)){
+            yintent ++;
+        }
+        if(controller.held(SnesController.LEFT)){
+            xintent --;
+        }
+        if(controller.held(SnesController.RIGHT)){
+            xintent ++;
+        }
+        mouse[0] += 10*xintent;
+        mouse[1] += 10*yintent;
+
+        // Get mouse position for this player
+        float mouseX = mouse[0];
+        float mouseY = mouse[1];
+
+        // Determine which module (if any) is hovered
+        int hoveredModule = -1;
+        for (int m = 0; m < game.modules.length; m++) {
+            int col = m % 2;
+            int row = m / 2;
+            int x = 1530 + col * 270;
+            int y = 100 + row * 200;
+            if (mouseX >= x && mouseX < x + 270 && mouseY >= y && mouseY < y + 200) {
+                hoveredModule = m;
+                break;
+            }
+        }
+        playerHover = hoveredModule;
+
+        // Handle selection
+        if (hoveredModule != -1 && controller.pressed(SnesController.A)) {
+            // Find the first empty slot (-1)
+            for (int s = 0; s < moduleSelections.length; s++) {
+                if (moduleSelections[s] == -1) {
+                    moduleSelections[s] = hoveredModule;
+                    break;
+                }
+            }
+        }
+        else if (controller.pressed(SnesController.B)){
+            // Remove the last selected module
+            for (int s = moduleSelections.length - 1; s >= 0; s--) {
+                if (moduleSelections[s] != -1) {
+                    moduleSelections[s] = -1;
+                    break;
+                }
+            }
+        }
+    }
+    
+    public void drawPlayerPreview(Graphics2D g, boolean drawMouse) {
+        
+        int col = playerNum % 2;
+        int row = playerNum / 2;
+        int x = 1220 + col * 1160;
+        int y = 375 + row * 650;
+        
+        g.drawImage(ModuleSelect.playerShadow, x-225,y-225,null);
+        
+        g.translate(x, y);
+
+        if (Players.centersTilted[center])
+            g.rotate(-Math.PI / 4f);
+
+        int hovered = playerHover;
+        boolean previewDrawn = false;
+        
+        for (int i = 0; i < 4; i++) {
+            if (moduleSelections[i] >= 0)
+                g.drawImage(ModuleSelect.eqippedPreviews[moduleSelections[i]], -160, -330, null);
+            else if(!previewDrawn && hovered >= 0 ){
+                previewDrawn = true;
+                Composite oldComp = g.getComposite();
+                g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f));
+                g.drawImage(ModuleSelect.eqippedPreviews[hovered], -160, -330, null);
+                g.setComposite(oldComp);
+            }
+            g.rotate(Math.PI / 2);
+        }
+        if (Players.centersTilted[center])
+            g.rotate(Math.PI / 4f);
+
+        g.drawImage(ModuleSelect.playerPreviews[center], -160, -160, null);
+
+        g.translate(-x, -y);
+        if (drawMouse)
+            g.drawImage(ModuleSelect.cursors[playerNum], Math.round(mouse[0]) - 100,
+                    Math.round(mouse[1]) - 100, 200, 200, null);
+    }
+    
+    public void tickGame(){
+        
+        controller.clearPressed();
+        controller.update();
         
         if(!alive){
             hitboxes = null;
@@ -107,7 +234,7 @@ public class Player {
         if(explosionFrame > 0){
             if(explosionFrame > 3 && explosionFrame < 15){
                 hitboxes = new HitboxPoint[1];
-                hitboxes[0] = new HitboxPoint((int)x,(int)y,100,10,100,null);
+                hitboxes[0] = new HitboxPoint((int)x,(int)y,200,10,100,null);
             }
             else{
                 hitboxes = null;
@@ -117,20 +244,53 @@ public class Player {
         
         if(pause > 0){
             pause --;
-            if(deathVelocity > 0 || deathLevel > 0){
-                if(controller.pressed(SnesController.X + mashButton)){
-                    deathVelocity -= 0.1;
-                }
+            if(mash && deathVelocity > 0 || deathLevel > 0 &&
+                    controller.pressed(SnesController.X + mashButton, false)){
+                deathVelocity -= 0.1;
+            }
+            else if(!mash && numButtons > 0 && controller.pressed(SnesController.X + mashButton, false)){
+                numButtons --;
+                deathLevel -= 0;
+                if(numButtons > 0)mashButton = Players.random.nextInt(4);
             }
             return;
         }
-        else if (deathVelocity > 0 || deathLevel > 0){
-            deathLevel += deathVelocity;
-            if(deathLevel < 90 && deathVelocity <0)
-                deathLevel = 0;
+        if(numButtons > 0 || deathVelocity > 0 || deathLevel > 0){
+            if (mash){
+                deathLevel += deathVelocity;
+                if(deathLevel < 90 && deathVelocity <0)
+                    deathLevel = 0;
 
-            if(controller.pressed(SnesController.X + mashButton)){
-                deathVelocity -= 0.1;
+                if(controller.pressed(SnesController.X + mashButton, false)){
+                    deathVelocity -= 0.1;
+                }
+            }
+            if(!mash){
+                deathLevel += 0;
+
+                if(controller.pressed(SnesController.X + mashButton, false)){
+//                    numButtons --;
+                    deathLevel -= 0;
+                    if(numButtons > 0){
+                        int oldButton = mashButton;
+                        mashButton = nextMashButton;
+                        nextMashButton = Players.random.nextInt(2);
+                        if(mashButton < oldButton){
+                            if(nextMashButton == mashButton)nextMashButton ++;
+                            if(nextMashButton == oldButton)nextMashButton ++;
+                        }
+                        else{
+                            if(nextMashButton == oldButton)nextMashButton ++;
+                            if(nextMashButton == mashButton)nextMashButton ++;
+                        }
+                    }
+                    else{
+                    }
+                    if(lastPressTime != 0){
+                        System.out.println(System.currentTimeMillis() - lastPressTime);
+                    }
+                    lastPressTime = System.currentTimeMillis();
+                }
             }
             controller.clearPressed();
 
@@ -237,9 +397,7 @@ public class Player {
         for(int i = 0; i < 4; i ++){
             modules[i].tick();
         }
-
-        controller.clearPressed();
-
+        
         hitboxes = new HitboxPoint[modules[0].getHitbox().length + modules[1].getHitbox().length+
         modules[2].getHitbox().length + modules[3].getHitbox().length + 1];
         hitboxes[0] = new HitboxPoint((int)x,(int)y,43,0,100,null);
@@ -306,7 +464,7 @@ public class Player {
         jitterY = (float)Math.abs(Math.sin(direction)*knockback);
         
         if(type != 2){
-            if(this.damage > 60){
+            if(this.damage > 60 && mash){
                 deathVelocity = (float)(Math.pow((this.damage-60)*Math.pow(damage,1/2f),1/2f)/12);
                 System.out.println(deathVelocity);
                 if(deathVelocity < 0.3)deathVelocity = 0;
@@ -315,6 +473,19 @@ public class Player {
                 }
                 if(rVel > 0)spinDirection = 1;
                 else spinDirection = -1;
+            }
+            
+            if(this.damage > 80 && !mash){
+                numButtons = 2 + (this.damage - 80 + damage * 2)/10;
+                deathVelocity = 1;
+                mashButton = Players.random.nextInt(4);
+                nextMashButton = Players.random.nextInt(3);
+                if(nextMashButton >= mashButton)nextMashButton ++;
+                
+                if(rVel > 0)spinDirection = 1;
+                else spinDirection = -1;
+                
+                // the fastest I ever got was 176
             }
 
             this.damage += damage;
@@ -366,7 +537,7 @@ public class Player {
             x2 += (jitterX - dir * jitterX)*((float)pause/maxPause);
             y2 += (jitterY - dir * jitterY)*((float)pause/maxPause);
         }
-        else if(deathVelocity > 0|| deathLevel > 0){
+        else if(numButtons > 0 || deathVelocity > 0|| deathLevel > 0){
             float dist = deathLevel*8/100f + Players.random.nextFloat((deathLevel+0.01f)*2/100);
             double angle = Players.random.nextDouble(Math.PI*2);
             x2 += Math.cos(angle)*dist;
@@ -374,6 +545,7 @@ public class Player {
             sparkFrame ++;
             if(sparkFrame >= 50)sparkFrame = 0;
             mashFrame ++;
+            if(!mash && mashFrame >= 8)mashFrame = 0;
             if(mashFrame >= 9)mashFrame = 0;
         }else if(damage > 34 && damage < 200){
             float dist = Players.random.nextFloat((damage-33.999f)*2/100);
@@ -455,12 +627,19 @@ public class Player {
             g.rotate(-rotation);
             g.translate(-x2, -y2);
         }
-        if((deathVelocity>0 || deathLevel > 0)&& pause == 0){
+        if(numButtons > 0 || deathVelocity > 0 || deathLevel > 0){
             x2 += (x-x2)*0.6f;
             y2 += (y-y2)*0.6f;
             
             g.translate(x2,y2);
-            g.drawImage(Players.mash[mashButton][mashFrame], -20,-20, null);
+            if(mash)
+                g.drawImage(Players.mash[mashButton][mashFrame], -20,-20, null);
+            else{
+                g.drawImage(Players.skillCheckBack, -35,-35, null);
+                g.drawImage(Players.skillCheck[mashButton][mashFrame], -35,-35, null);
+                if(numButtons > 1)
+                    g.drawImage(Players.skillCheckNext[nextMashButton], -35,-35, null);
+            }
             if(deathLevel > 40)
                 g.drawImage(Players.sparks[sparkFrame], -60,-60, null);
             g.translate(-x2,-y2);

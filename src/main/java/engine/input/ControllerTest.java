@@ -1,5 +1,11 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
 package engine.input;
 
+import engine.framework.BasicEngine;
+import java.awt.Graphics;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Random;
@@ -10,7 +16,42 @@ import org.lwjgl.glfw.GLFWGamepadState;
  *
  * @author cookiebot
  */
-public class SnesController {
+public class ControllerTest extends BasicEngine{
+
+    ArrayList<FriendlyController> controllers = new ArrayList<>();
+    ArrayList<Integer> ids = new ArrayList<>();
+    
+    public ControllerTest(){
+        super();
+        GLFW.glfwInit();
+        this.start();
+    }
+    
+    @Override
+    public void tick() {
+    
+        GLFW.glfwPollEvents();
+        
+        for(int jid = GLFW.GLFW_JOYSTICK_1; jid <= GLFW.GLFW_JOYSTICK_LAST; jid++){
+            if(GLFW.glfwJoystickPresent(jid) && GLFW.glfwJoystickIsGamepad(jid)){
+                if(!ids.contains((Integer)jid)){
+                    ids.add(jid);
+                    controllers.add(new FriendlyController(jid));
+                }
+            }
+        }
+        for (FriendlyController controller : controllers) {
+            controller.update();
+        }
+    }
+    
+    
+    public static void main(String[] args) {
+        ControllerTest game = new ControllerTest();
+    }
+    
+}
+class FriendlyController{
     
     public static int X = 0;
     public static int A = 1;
@@ -34,10 +75,31 @@ public class SnesController {
     private final Boolean[] held = new Boolean[12];
     private final Boolean[] previousHeld = new Boolean[12];
     
+    public static ArrayList<String> names = new ArrayList<>();
+    
+    String name;
     Integer controllerID;
     private final GLFWGamepadState gamepadState;
     
-    public SnesController(int id){
+    public FriendlyController(int id){
+        if(names.isEmpty()){
+            names.add("Jeremy");
+            names.add("Tim");
+            names.add("Jim");
+            names.add("Christopher");
+            names.add("Tomathy");
+            names.add("Wesley");
+            names.add("Lucille");
+            names.add("Fanny");
+            names.add("Helga");
+            names.add("Jamey");
+            names.add("Kimberleighghe");
+            names.add("Sally");
+        }
+        Random r = new Random();
+        int num = r.nextInt(names.size());
+        name = names.get(num);
+        names.remove(num);
         controllerID = id;
         
         this.gamepadState = GLFWGamepadState.malloc();
@@ -55,6 +117,8 @@ public class SnesController {
         // Check if joystick is still present and is a gamepad
         if(!GLFW.glfwJoystickPresent(controllerID) || !GLFW.glfwJoystickIsGamepad(controllerID)) {
             active = false;
+            
+            System.out.println(name+" disconnected.");
             return;
         }
         else{
@@ -117,111 +181,25 @@ public class SnesController {
                 set(RIGHT, true);
             }
         }
+        System.out.println("Player " + controllerID + " | " + name+" pressed: ");
+        if(held[0])System.out.print("X");
+        else System.out.print("_");
+        if(held[1])System.out.print("A");
+        else System.out.print("_");
+        if(held[2])System.out.print("B");
+        else System.out.print("_");
+        if(held[3])System.out.print("Y");
+        else System.out.print("_");
+        System.out.println("");
     }
-    public boolean pressed(int button_code, boolean clear){
-        if(!clear)return pressed[button_code];
-        boolean holder = pressed[button_code];
-        pressed[button_code] = false;
-        return holder;
-    }
-    public boolean held(int button_code){
-        return held[button_code];
-    }
-    public boolean released(int button_code, boolean clear){
-        if(!clear)return released[button_code];
-        boolean holder = released[button_code];
-        released[button_code] = false;
-        return holder;
-    }
-    public boolean pressed(int button_code){
-        return pressed[button_code];
-    }
-    public boolean released(int button_code){
-        return released[button_code];
-    }
-    public void clearPressed(){
-        for(int i = 0; i < 12; i ++){
-            pressed[i] = false;
-        }
-    }
-    public void clearHeld(){
-        for(int i = 0; i < 12; i ++){
-            held[i] = false;
-        }
-    }
-    public void clearReleased(){
-        for(int i = 0; i < 12; i ++){
-            released[i] = false;
-        }
-    }
-    public void clearChanges(){
-        for(int i = 0; i < 12; i ++){
-            pressed[i] = false;
-            released[i] = false;
-        }
-    }
-    private void set(int i, boolean b){
+    
+    public void set(int i, boolean b){
         if(!Objects.equals(held[i], b)){
             if(b) pressed[i] = true;
             else released[i] = true;
             held[i] = b;
         }
     }
-    // to be called at the start of the program
-    public static void init(){
-        GLFW.glfwInit();
-    }
-    // to be called at shutdown
-    public static void terminateGLFW(){
-        GLFW.glfwTerminate();
-    }
-    // To be called each tick
-    public static ArrayList<Integer> updateControllers(){
-        
-        GLFW.glfwPollEvents();
-        
-        ArrayList<Integer> arr = new ArrayList<>();
-        
-        for(int jid = GLFW.GLFW_JOYSTICK_1; jid <= GLFW.GLFW_JOYSTICK_LAST; jid++){
-            if(GLFW.glfwJoystickPresent(jid) && GLFW.glfwJoystickIsGamepad(jid)){
-                arr.add(jid);
-            }
-        }
-        
-        return arr;
-    }
-    public static boolean getButtonHeld(int controllerID, int buttonCode){
-        GLFWGamepadState gamepadState = GLFWGamepadState.malloc();
-        if(!GLFW.glfwGetGamepadState(controllerID, gamepadState)){
-            System.out.println("Controller with id " + controllerID + " not found");
-            return false;
-        }
-        Boolean[] held = new Boolean[12];
-        
-        held[A] = gamepadState.buttons(GLFW.GLFW_GAMEPAD_BUTTON_X) == GLFW.GLFW_PRESS;      // GLFW X -> SNES A
-        held[B] = gamepadState.buttons(GLFW.GLFW_GAMEPAD_BUTTON_A) == GLFW.GLFW_PRESS;      // GLFW A -> SNES B
-        held[X] = gamepadState.buttons(GLFW.GLFW_GAMEPAD_BUTTON_B) == GLFW.GLFW_PRESS;      // GLFW B -> SNES X
-        held[Y] = gamepadState.buttons(GLFW.GLFW_GAMEPAD_BUTTON_Y) == GLFW.GLFW_PRESS;      // GLFW Y -> SNES Y
-        
-        // D-pad buttons
-        held[UP] = gamepadState.buttons(GLFW.GLFW_GAMEPAD_BUTTON_DPAD_UP) == GLFW.GLFW_PRESS;
-        held[DOWN] = gamepadState.buttons(GLFW.GLFW_GAMEPAD_BUTTON_DPAD_DOWN) == GLFW.GLFW_PRESS;
-        held[LEFT] = gamepadState.buttons(GLFW.GLFW_GAMEPAD_BUTTON_DPAD_LEFT) == GLFW.GLFW_PRESS;
-        held[RIGHT] = gamepadState.buttons(GLFW.GLFW_GAMEPAD_BUTTON_DPAD_RIGHT) == GLFW.GLFW_PRESS;
-        
-        // Shoulder buttons - Your "Retro Controller" has unusual mapping:
-        // Left physical trigger -> RIGHT_BUMPER button
-        // Right physical trigger -> RIGHT_TRIGGER axis (1.0 when pressed)
-        boolean leftShoulder = gamepadState.buttons(GLFW.GLFW_GAMEPAD_BUTTON_RIGHT_BUMPER) == GLFW.GLFW_PRESS;
-        boolean rightShoulder = gamepadState.axes(GLFW.GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER) == 1.0f;
-        
-        held[LTRIGGER] = leftShoulder;
-        held[RTRIGGER] = rightShoulder;
-        
-        // Start/Select buttons
-        held[SELECT] = gamepadState.buttons(GLFW.GLFW_GAMEPAD_BUTTON_BACK) == GLFW.GLFW_PRESS;
-        held[START] = gamepadState.buttons(GLFW.GLFW_GAMEPAD_BUTTON_START) == GLFW.GLFW_PRESS;
-        
-        return held[buttonCode];
-    }
+    
+    
 }

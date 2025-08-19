@@ -21,6 +21,9 @@ public class Players {
     public static BufferedImage[][] flashes;
     public static BufferedImage[] sparks;
     public static BufferedImage[][] mash;
+    public static BufferedImage[][] skillCheck;
+    public static BufferedImage[] skillCheckNext;
+    public static BufferedImage skillCheckBack;
     public static BufferedImage[] explosion;
     public static BufferedImage charredRemains;
     
@@ -82,6 +85,21 @@ public class Players {
             for(int i = 0; i < 9; i ++){
                 mash[j][i] = Textures.loadImage("/textures/players/button/"+names[j]+"/"+Calcs.fillInt(i)+".png");
             }
+        }
+        
+        skillCheckBack = Textures.loadImage("/textures/players/skillCheck/base.png");
+        skillCheck = new BufferedImage[4][];
+        skillCheckNext = new BufferedImage[4];
+        
+        for(int j = 0; j < 4; j ++){
+            skillCheck[j] = new BufferedImage[8];
+            for(int i = 0; i < 8; i ++){
+                skillCheck[j][i] = Textures.loadImage("/textures/players/skillCheck/"+names[j]+"/"+Calcs.fillInt(i)+".png");
+            }
+        }
+        
+        for(int j = 0; j < 4; j ++){
+            skillCheckNext[j] = Textures.loadImage("/textures/players/skillCheck/"+names[j]+"/next.png");
         }
                 
         explosion = new BufferedImage[40];

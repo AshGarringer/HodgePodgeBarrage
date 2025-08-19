@@ -87,6 +87,7 @@ public abstract class Engine extends Canvas implements Runnable{
                 }
             }
             catch (Exception e){
+                e.printStackTrace();
                 if(!this.handleError(e)){
                     break;
                 }
