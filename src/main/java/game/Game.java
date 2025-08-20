@@ -2,6 +2,7 @@ package game;
 
 import engine.framework.Engine;
 import engine.framework.MultiState;
+import engine.graphics.SimpleAnimation;
 import engine.graphics.Text;
 import engine.graphics.Textures;
 import engine.input.SnesController;
@@ -10,7 +11,6 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Random;
-import org.lwjgl.glfw.GLFW;
 
 /**
  *
@@ -20,6 +20,15 @@ public class Game extends Engine {
     
     public static int WINDOW_WIDTH = 1600;
     public static int WINDOW_HEIGHT = 900;
+    
+    SimpleAnimation animation;
+    // I have no excuse for this
+    SimpleAnimation logoX1;
+    SimpleAnimation logoX2;
+    SimpleAnimation logoY1;
+    SimpleAnimation logoScale;
+    SimpleAnimation startBob;
+    int animationState;
     
     Module[] modules;
     MultiState state;
@@ -39,7 +48,7 @@ public class Game extends Engine {
 
     public Game(){
         init();
-        map =  Textures.loadImage("/textures/maps/demo.png");
+        map = Textures.loadImage("/textures/maps/demo.png");
         this.start("HodgePodgeRobotBarrage", 1600, 900, true);
     }
     
@@ -57,6 +66,34 @@ public class Game extends Engine {
         players = new ArrayList<>();
         projectiles = new ArrayList<>();
         winner = -1;
+        animation = new SimpleAnimation(3500,false);
+        animation.addHold(30);
+        animation.addStateChange();
+        animation.addStateChange();
+        for(int i = 0; i < 4; i ++){
+            animation.addMotion(3500, 0, 30, SimpleAnimation.SLOW_TOWARDS,20);
+            animation.addStateChange();
+        }
+        animation.addMotion(255, 0, 80, SimpleAnimation.MOVE_EVEN);
+        
+        logoX1 = new SimpleAnimation(true);
+        logoX1.addMotion(-5, 5, 103, SimpleAnimation.SMOOTH);
+        logoX1.addMotion(5, -5, 103, SimpleAnimation.SMOOTH);
+        logoX2 = new SimpleAnimation(true);
+        logoX2.addMotion(5, -5, 211, SimpleAnimation.SMOOTH);
+        logoX2.addMotion(-5, 5, 211, SimpleAnimation.SMOOTH);
+        logoY1 = new SimpleAnimation(true);
+        logoY1.addMotion(15, -15, 244, SimpleAnimation.SMOOTH);
+        logoY1.addMotion(-15, 15, 244, SimpleAnimation.SMOOTH);
+        logoScale = new SimpleAnimation(true);
+//        logoScale.addMotion(1.005f, 1, 30, SimpleAnimation.SMOOTH);
+        logoScale.addMotion(1.01f, 1, 30, SimpleAnimation.SPEED_TOWARDS,20);
+        startBob = new SimpleAnimation(true);
+        startBob.addMotion(8, -8, 244, SimpleAnimation.SMOOTH);
+        startBob.addMotion(-8, 8, 244, SimpleAnimation.SMOOTH);
+        //not 365
+        // four beats = 121.75 ticks
+//        state.transition(0, 0, 152);
     }
 
     @Override
@@ -68,6 +105,7 @@ public class Game extends Engine {
         switch (state.state()) {
             case 0:
                 // main menu
+                if(state.isTransit())break;
                 
                 for(Integer id : controllerIds){
                     if(SnesController.getButtonHeld(id, SnesController.START)){
@@ -155,30 +193,10 @@ public class Game extends Engine {
         switch (state.state()) {
             case 0:
                 // main menu
-                
                 this.setHints(g);
-                float scale1 = window.getHeight() / 700f;
-                float offset1 = (window.getWidth() / scale1 - 1800) / 2;
-
-                g.setColor(Color.BLACK);
-                g.fillRect(0, 0, width, height);
-                
-                g.drawImage(MainMenu.logo, (int)(offset1*scale1), 0,(int)(MainMenu.logo.getWidth()*scale1),
-                        (int)(MainMenu.logo.getHeight()*scale1),null);
-                
-                ArrayList<Integer> controllerIds = SnesController.updateControllers();
-                text.drawString(width/2, height/2 + 50, "(unfinished menu)", g);
-                
-                
-                for(int i = 0; i < controllerIds.size(); i ++){
-                    text.drawString((int)((width/5f) *(i+1)), height - 40, "Player "+Integer.toString(i+1), g);
-                }
-                if(state.isTransit()){
-                    g.setColor(new Color(0,0,0,(int)(255*state.getTransit())));
-                    
-                    g.fillRect(0, 0, width, height);
-                }
+                MainMenu.render(g,this,width,height);
                 break;
+
             case 2:
                 this.setHints(g);
                 float scale2 = window.getHeight() / 1400f;
@@ -215,7 +233,7 @@ public class Game extends Engine {
                 break;
 
             case 3:
-
+                
                 g.setColor(Color.white);
                 g.fillRect(0, 0, width, height);
                 
