@@ -18,6 +18,17 @@
             <artifactId>lwjgl-glfw</artifactId>
             <version>3.3.4</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.lwjgl</groupId>
+            <artifactId>lwjgl-openal</artifactId>
+            <version>3.3.4</version>
+        </dependency>
+        <dependency>
+            <groupId>org.lwjgl</groupId>
+            <artifactId>lwjgl-stb</artifactId>
+            <version>3.3.4</version>
+        </dependency>
         
         <!-- Native libraries for different platforms -->
         <!-- Windows -->
@@ -32,6 +43,45 @@
             <artifactId>lwjgl-glfw</artifactId>
             <version>3.3.4</version>
             <classifier>natives-windows</classifier>
+        </dependency>
+                <!-- Add missing OpenAL native libraries -->
+        <dependency>
+            <groupId>org.lwjgl</groupId>
+            <artifactId>lwjgl-openal</artifactId>
+            <version>3.3.4</version>
+            <classifier>natives-windows</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.lwjgl</groupId>
+            <artifactId>lwjgl-openal</artifactId>
+            <version>3.3.4</version>
+            <classifier>natives-linux</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.lwjgl</groupId>
+            <artifactId>lwjgl-openal</artifactId>
+            <version>3.3.4</version>
+            <classifier>natives-macos</classifier>
+        </dependency>
+        
+        <!-- Add missing STB native libraries -->
+        <dependency>
+            <groupId>org.lwjgl</groupId>
+            <artifactId>lwjgl-stb</artifactId>
+            <version>3.3.4</version>
+            <classifier>natives-windows</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.lwjgl</groupId>
+            <artifactId>lwjgl-stb</artifactId>
+            <version>3.3.4</version>
+            <classifier>natives-linux</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.lwjgl</groupId>
+            <artifactId>lwjgl-stb</artifactId>
+            <version>3.3.4</version>
+            <classifier>natives-macos</classifier>
         </dependency>
         
         <!-- Linux -->

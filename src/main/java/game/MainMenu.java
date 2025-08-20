@@ -20,7 +20,7 @@ public class MainMenu {
     public static BufferedImage logo;
     public static BufferedImage start;
     
-    private static SimpleAnimation animation;
+    static SimpleAnimation animation;
     private static SimpleAnimation logoX1;
     private static SimpleAnimation logoX2;
     private static SimpleAnimation logoY1;

@@ -70,7 +70,7 @@ public class SoundPlayer {
             sounds.add(sound);
             
         } catch (Exception ex) {
-            System.out.println("error");
+                Logger.getLogger(Sound.class.getName()).log(Level.SEVERE, null, ex);
         } finally {
             try {
                 audioInputStream.close();

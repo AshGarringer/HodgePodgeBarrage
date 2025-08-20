@@ -2,10 +2,11 @@ package game;
 
 import engine.framework.Engine;
 import engine.framework.MultiState;
-import engine.graphics.SimpleAnimation;
 import engine.graphics.Text;
 import engine.graphics.Textures;
 import engine.input.SnesController;
+import engine.sound.LwjglAudioManager;
+import engine.sound.SoundPlayer;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -20,15 +21,6 @@ public class Game extends Engine {
     
     public static int WINDOW_WIDTH = 1600;
     public static int WINDOW_HEIGHT = 900;
-    
-    SimpleAnimation animation;
-    // I have no excuse for this
-    SimpleAnimation logoX1;
-    SimpleAnimation logoX2;
-    SimpleAnimation logoY1;
-    SimpleAnimation logoScale;
-    SimpleAnimation startBob;
-    int animationState;
     
     Module[] modules;
     MultiState state;
@@ -45,6 +37,8 @@ public class Game extends Engine {
     Random random;
     
     BufferedImage map;
+    
+    private LwjglAudioManager audioManager;
 
     public Game(){
         init();
@@ -66,47 +60,21 @@ public class Game extends Engine {
         players = new ArrayList<>();
         projectiles = new ArrayList<>();
         winner = -1;
-        animation = new SimpleAnimation(3500,false);
-        animation.addHold(30);
-        animation.addStateChange();
-        animation.addStateChange();
-        for(int i = 0; i < 4; i ++){
-            animation.addMotion(3500, 0, 30, SimpleAnimation.SLOW_TOWARDS,20);
-            animation.addStateChange();
-        }
-        animation.addMotion(255, 0, 80, SimpleAnimation.MOVE_EVEN);
-        
-        logoX1 = new SimpleAnimation(true);
-        logoX1.addMotion(-5, 5, 103, SimpleAnimation.SMOOTH);
-        logoX1.addMotion(5, -5, 103, SimpleAnimation.SMOOTH);
-        logoX2 = new SimpleAnimation(true);
-        logoX2.addMotion(5, -5, 211, SimpleAnimation.SMOOTH);
-        logoX2.addMotion(-5, 5, 211, SimpleAnimation.SMOOTH);
-        logoY1 = new SimpleAnimation(true);
-        logoY1.addMotion(15, -15, 244, SimpleAnimation.SMOOTH);
-        logoY1.addMotion(-15, 15, 244, SimpleAnimation.SMOOTH);
-        logoScale = new SimpleAnimation(true);
-//        logoScale.addMotion(1.005f, 1, 30, SimpleAnimation.SMOOTH);
-        logoScale.addMotion(1.01f, 1, 30, SimpleAnimation.SPEED_TOWARDS,20);
-        startBob = new SimpleAnimation(true);
-        startBob.addMotion(8, -8, 244, SimpleAnimation.SMOOTH);
-        startBob.addMotion(-8, 8, 244, SimpleAnimation.SMOOTH);
-        //not 365
-        // four beats = 121.75 ticks
-//        state.transition(0, 0, 152);
+        audioManager = new LwjglAudioManager();
     }
 
     @Override
     public void tick() {
         state.update();
-        
+        audioManager.update();
         ArrayList<Integer> controllerIds = SnesController.updateControllers();
         
         switch (state.state()) {
             case 0:
                 // main menu
                 if(state.isTransit())break;
-                
+                if(MainMenu.animation.getFrame() == 30)
+                    audioManager.playMusic("/music/ThemeIntro.ogg", "/music/ThemeLoop.ogg");
                 for(Integer id : controllerIds){
                     if(SnesController.getButtonHeld(id, SnesController.START)){
                         state.transition(20, 2,60);
