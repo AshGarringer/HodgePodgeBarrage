@@ -21,6 +21,7 @@ public class SimpleAnimation {
     private final boolean loop;
     private boolean finished;
     private int state;
+    private boolean state_changed;
     
     public SimpleAnimation(float start, boolean loop){
         animation = new ArrayList<>();
@@ -37,7 +38,9 @@ public class SimpleAnimation {
     }
     
     public void tick(){
+        if(state_changed)state_changed = false;
         if(state_increments.contains((Integer)frame)){
+            state_changed = true;
             state ++;
         }
         if(frame == animation.size()-1){
@@ -129,5 +132,8 @@ public class SimpleAnimation {
     }
     public void setState(int state){
         this.state = state;
+    }
+    public boolean stateChanged(){
+        return state_changed;
     }
 }

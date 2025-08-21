@@ -39,6 +39,8 @@ public class Game extends Engine {
     BufferedImage map;
     
     private LwjglAudioManager audioManager;
+    Thread load;
+    boolean loaded;
 
     public Game(){
         init();
@@ -47,34 +49,48 @@ public class Game extends Engine {
     }
     
     public final void init(){
-        SnesController.init();
-        text = new Text("Regular",40,Color.white);
-        text2 = new Text("Regular2",30,Color.white, 5, Color.black, true);
-        text3 = new Text("Fancy",80,Color.black,5, Color.white, true);
-        random = new Random();
         state = new MultiState(0);
-        modules = Modules.getModules();
-        Players.loadImages();
-        ModuleSelect.loadImages();
-        MainMenu.load();
-        players = new ArrayList<>();
-        projectiles = new ArrayList<>();
-        winner = -1;
-        audioManager = new LwjglAudioManager();
+        text = new Text("Regular",40,Color.white);
+        load = new Thread(){
+            @Override
+            public void run(){
+                SnesController.init();
+                text = new Text("Regular",40,Color.white);
+                text2 = new Text("Regular2",30,Color.white, 5, Color.black, true);
+                text3 = new Text("Fancy",80,Color.black,5, Color.white, true);
+                random = new Random();
+                modules = Modules.getModules();
+                Players.loadImages();
+                ModuleSelect.loadImages();
+                MainMenu.load();
+                players = new ArrayList<>();
+                projectiles = new ArrayList<>();
+                winner = -1;
+                audioManager = new LwjglAudioManager();
+                loaded = true;
+            }
+        };
+        load.start();
     }
 
     @Override
     public void tick() {
         state.update();
-        audioManager.update();
-        ArrayList<Integer> controllerIds = SnesController.updateControllers();
+        ArrayList<Integer> controllerIds = new ArrayList<>();
+        if(loaded){
+            audioManager.update();
+            controllerIds = SnesController.updateControllers();
+        }
         
         switch (state.state()) {
             case 0:
+                if(loaded)state.transition(0, 0);
+                break;
+            case 1:
                 // main menu
                 if(state.isTransit())break;
-                if(MainMenu.animation.getFrame() == 30)
-                    audioManager.playMusic("/music/ThemeIntro.ogg", "/music/ThemeLoop.ogg");
+                if(MainMenu.animation.getFrame() == 60)
+                    audioManager.playMusic("ThemeIntro.ogg", "ThemeLoop.ogg");
                 for(Integer id : controllerIds){
                     if(SnesController.getButtonHeld(id, SnesController.START)){
                         state.transition(20, 2,60);
@@ -160,6 +176,11 @@ public class Game extends Engine {
 
         switch (state.state()) {
             case 0:
+                g.setColor(Color.black);
+                g.fillRect(0, 0, width, height);
+                text.drawString(width/2, height/2, "Loading", g);
+                break;
+            case 1:
                 // main menu
                 this.setHints(g);
                 MainMenu.render(g,this,width,height);

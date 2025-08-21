@@ -5,11 +5,16 @@ import org.lwjgl.stb.STBVorbis;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
+import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
 
 import static org.lwjgl.openal.AL10.*;
 import static org.lwjgl.openal.ALC10.*;
@@ -19,6 +24,7 @@ import static org.lwjgl.system.MemoryStack.stackPush;
 /**
  * LWJGL-based audio manager for HodgePodgeBarrage
  * Supports music with intro/loop sections and sound effects
+ * Preloads all OGG files for instant playback
  */
 public class LwjglAudioManager {
 
@@ -43,6 +49,7 @@ public class LwjglAudioManager {
 
     public LwjglAudioManager() {
         initializeOpenAL();
+        preloadAllAudioFiles();
     }
 
     private void initializeOpenAL() {
@@ -69,13 +76,128 @@ public class LwjglAudioManager {
     }
 
     /**
+     * Preload all OGG files from the sounds folder
+     */
+    private void preloadAllAudioFiles() {
+        System.out.println("Starting audio preload...");
+        
+        try {
+            // Get the sounds folder from resources
+            URI soundsUri = getClass().getResource("/sounds").toURI();
+            
+            Path soundsPath;
+            if (soundsUri.getScheme().equals("jar")) {
+                // Running from JAR - need to use FileSystem
+                FileSystem fileSystem = FileSystems.newFileSystem(soundsUri, Collections.emptyMap());
+                soundsPath = fileSystem.getPath("/sounds");
+            } else {
+                // Running from IDE - direct file access
+                soundsPath = Paths.get(soundsUri);
+            }
+            
+            // Find all OGG files
+            try (Stream<Path> files = Files.walk(soundsPath)) {
+                files.filter(Files::isRegularFile)
+                     .filter(path -> path.toString().toLowerCase().endsWith(".ogg"))
+                     .forEach(this::preloadAudioFile);
+            }
+            
+            System.out.println("Audio preload completed! Loaded " + loadedBuffers.size() + " files:");
+            for (String filename : loadedBuffers.keySet()) {
+                System.out.println("  - " + filename);
+            }
+            
+        } catch (URISyntaxException | IOException e) {
+            System.err.println("Failed to preload audio files: " + e.getMessage());
+            System.out.println("Audio files will be loaded on-demand instead.");
+        }
+    }
+
+    /**
+     * Preload a single audio file
+     */
+    private void preloadAudioFile(Path filePath) {
+        try {
+            String filename = filePath.getFileName().toString();
+            
+            if (loadedBuffers.containsKey(filename)) {
+                return; // Already loaded
+            }
+            
+            System.out.println("Preloading: " + filename);
+            
+            AudioBuffer buffer = loadOGGFromPath(filePath);
+            if (buffer != null) {
+                loadedBuffers.put(filename, buffer);
+            }
+            
+        } catch (Exception e) {
+            System.err.println("Failed to preload: " + filePath.getFileName() + " - " + e.getMessage());
+        }
+    }
+
+    /**
+     * Load OGG file from a specific path (for preloading)
+     */
+    private AudioBuffer loadOGGFromPath(Path filePath) {
+        try (MemoryStack stack = stackPush()) {
+            // Load OGG file from path
+            ByteBuffer audioData = loadFileFromPath(filePath);
+
+            IntBuffer channelsBuffer = stack.mallocInt(1);
+            IntBuffer sampleRateBuffer = stack.mallocInt(1);
+
+            ShortBuffer rawAudioBuffer = stb_vorbis_decode_memory(
+                    audioData, channelsBuffer, sampleRateBuffer);
+
+            if (rawAudioBuffer == null) {
+                throw new RuntimeException("Failed to decode OGG file: " + filePath.getFileName());
+            }
+
+            int channels = channelsBuffer.get();
+            int sampleRate = sampleRateBuffer.get();
+
+            int format = (channels == 1) ? AL_FORMAT_MONO16 : AL_FORMAT_STEREO16;
+
+            int bufferId = alGenBuffers();
+            alBufferData(bufferId, format, rawAudioBuffer, sampleRate);
+
+            // Free the native memory
+            MemoryUtil.memFree(audioData);
+
+            return new AudioBuffer(bufferId, format, sampleRate, channels);
+
+        } catch (Exception e) {
+            System.err.println("Failed to load OGG from path: " + filePath.getFileName() + " - " + e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Load file data from a Path (for preloading)
+     */
+    private ByteBuffer loadFileFromPath(Path filePath) throws IOException {
+        byte[] audioBytes = Files.readAllBytes(filePath);
+        
+        ByteBuffer buffer = MemoryUtil.memAlloc(audioBytes.length);
+        buffer.put(audioBytes);
+        buffer.flip();
+        return buffer;
+    }
+
+    /**
      * Load an audio file and return its buffer ID
+     * Now checks preloaded buffers first!
      */
     public AudioBuffer loadAudio(String filename) {
+        // Check if already preloaded
         if (loadedBuffers.containsKey(filename)) {
             return loadedBuffers.get(filename);
         }
 
+        // Fallback to on-demand loading if not preloaded
+        System.out.println("Loading on-demand (not preloaded): " + filename);
+        
         AudioBuffer buffer = null;
         try {
             if (filename.toLowerCase().endsWith(".ogg")) {
@@ -86,8 +208,10 @@ public class LwjglAudioManager {
                 throw new RuntimeException("Unsupported audio format: " + filename);
             }
 
-            loadedBuffers.put(filename, buffer);
-            System.out.println("Loaded audio: " + filename);
+            if (buffer != null) {
+                loadedBuffers.put(filename, buffer);
+                System.out.println("Loaded audio on-demand: " + filename);
+            }
             return buffer;
 
         } catch (Exception e) {
@@ -124,6 +248,7 @@ public class LwjglAudioManager {
 
     /**
      * Play music with intro/loop support
+     * Now uses preloaded buffers for instant transitions!
      */
     public void playMusic(String introFile, String loopFile) {
         stopMusic();
@@ -163,6 +288,7 @@ public class LwjglAudioManager {
 
     /**
      * Update the audio system - call this every frame
+     * Now has instant loop transitions!
      */
     public void update() {
         // Check if intro music finished
@@ -171,7 +297,7 @@ public class LwjglAudioManager {
             int state = alGetSourcei(source, AL_SOURCE_STATE);
 
             if (state == AL_STOPPED) {
-                // Intro finished, start loop
+                // Intro finished, start loop instantly (buffer already loaded!)
                 introFinished = true;
                 currentMusic = currentMusicLoop;
                 playMusicFile(currentMusicLoop);
@@ -204,7 +330,7 @@ public class LwjglAudioManager {
             alSourceStop(source);
         }
     }
-
+    
     /**
      * Stop all audio
      */
@@ -228,6 +354,20 @@ public class LwjglAudioManager {
 
     public void setSFXVolume(float volume) {
         this.sfxVolume = Math.max(0.0f, Math.min(1.0f, volume));
+    }
+
+    /**
+     * Get list of preloaded audio files
+     */
+    public Set<String> getPreloadedFiles() {
+        return new HashSet<>(loadedBuffers.keySet());
+    }
+
+    /**
+     * Check if a specific file is preloaded
+     */
+    public boolean isPreloaded(String filename) {
+        return loadedBuffers.containsKey(filename);
     }
 
     // Helper methods
@@ -287,6 +427,9 @@ public class LwjglAudioManager {
 
             int bufferId = alGenBuffers();
             alBufferData(bufferId, format, rawAudioBuffer, sampleRate);
+
+            // Free the native memory
+            MemoryUtil.memFree(audioData);
 
             return new AudioBuffer(bufferId, format, sampleRate, channels);
 

@@ -76,7 +76,7 @@ public abstract class Engine extends Canvas implements Runnable{
                     }
 
                     if(tickTimer == 0) {
-    //                    System.out.println(((sumTime/(float)tps)/time_per_tick)*100 + "%");
+                        System.out.println(((sumTime/(float)tps)/time_per_tick)*100 + "%");
                         sumTime = 0;
                         tickTimer = 0;
                     }
@@ -101,6 +101,8 @@ public abstract class Engine extends Canvas implements Runnable{
         
     }
     
+    int sync_timer = 0;
+    
     private void render() {
     	window.update();
         BufferStrategy bs = this.getBufferStrategy();
@@ -112,7 +114,13 @@ public abstract class Engine extends Canvas implements Runnable{
         render(graphics);
         graphics.dispose();
         bs.show();
-        Toolkit.getDefaultToolkit().sync();
+        if(sync_timer <= 0){
+            Toolkit.getDefaultToolkit().sync();
+            sync_timer = 4;
+        }
+        else{
+            sync_timer --;
+        }
         
     }
     
