@@ -221,6 +221,8 @@ public class Player {
                     Math.round(mouse[1]) - 100, 200, 200, null);
     }
     
+    int pressButtonTimer = 10;
+    
     public void tickGame(){
         
         controller.clearPressed();
@@ -258,7 +260,7 @@ public class Player {
         if(numButtons > 0 || deathVelocity > 0 || deathLevel > 0){
             if (mash){
                 deathLevel += deathVelocity;
-                if(deathLevel < 90 && deathVelocity <0)
+                if(deathLevel < 90 && deathVelocity < 0)
                     deathLevel = 0;
 
                 if(controller.pressed(SnesController.X + mashButton, false)){
@@ -266,30 +268,27 @@ public class Player {
                 }
             }
             if(!mash){
-                deathLevel += 0;
-
+                deathLevel += deathVelocity;
+                pressButtonTimer --;
                 if(controller.pressed(SnesController.X + mashButton, false)){
-//                    numButtons --;
-                    deathLevel -= 0;
+                    pressButtonTimer = 10;
+                    numButtons --;
+                    
+                    deathLevel -= 10;
+                    if(deathLevel < 0)deathLevel = 0;
                     if(numButtons > 0){
-                        int oldButton = mashButton;
                         mashButton = nextMashButton;
-                        nextMashButton = Players.random.nextInt(2);
-                        if(mashButton < oldButton){
-                            if(nextMashButton == mashButton)nextMashButton ++;
-                            if(nextMashButton == oldButton)nextMashButton ++;
-                        }
-                        else{
-                            if(nextMashButton == oldButton)nextMashButton ++;
-                            if(nextMashButton == mashButton)nextMashButton ++;
-                        }
+                        nextMashButton = Players.random.nextInt(3);
+                        if(nextMashButton >= mashButton)nextMashButton ++;
                     }
                     else{
+                        deathLevel = 0;
+                        deathVelocity = 0;
                     }
-                    if(lastPressTime != 0){
-                        System.out.println(System.currentTimeMillis() - lastPressTime);
-                    }
-                    lastPressTime = System.currentTimeMillis();
+//                    if(lastPressTime != 0){
+//                        System.out.println(System.currentTimeMillis() - lastPressTime);
+//                    }
+//                    lastPressTime = System.currentTimeMillis();
                 }
             }
             controller.clearPressed();
@@ -300,11 +299,13 @@ public class Player {
                 explosionFrame ++;
                 return;
             }
-            else if(deathLevel <= 0){
-                deathLevel = 0;
-                deathVelocity = 0;
-                explosionFrame = 0;
-                return;
+            if(mash){
+                if(deathLevel <= 0){
+                    deathLevel = 0;
+                    deathVelocity = 0;
+                    explosionFrame = 0;
+                    return;
+                }
             }
 
             lastX = x;
@@ -314,8 +315,8 @@ public class Player {
             yVel *= 0.97;
             tryToMove(xVel,yVel);
             lastR = rotation;
-            rVel = (rotation + spinDirection*deathLevel/300f)%(float)(Math.PI*2)-rotation;
-            rotation = (rotation + spinDirection*deathLevel/300f)%(float)(Math.PI*2);
+            rVel = (rotation + spinDirection*(deathLevel)/300f)%(float)(Math.PI*2)-rotation;
+            rotation = (rotation + spinDirection*(deathLevel)/300f)%(float)(Math.PI*2);
             hitboxes = new HitboxPoint[1];
             hitboxes[0] = new HitboxPoint((int)x,(int)y,50,0,100,null);
             return;
@@ -475,9 +476,14 @@ public class Player {
                 else spinDirection = -1;
             }
             
-            if(this.damage > 80 && !mash){
+            if(this.damage >= 80 && !mash){
                 numButtons = 2 + (this.damage - 80 + damage * 2)/10;
-                deathVelocity = 1;
+                
+//                deathVelocity = 1.6f;
+                
+//                deathVelocity = 1.37f;
+                deathVelocity = 0.37f+(this.damage)/220f;
+                
                 mashButton = Players.random.nextInt(4);
                 nextMashButton = Players.random.nextInt(3);
                 if(nextMashButton >= mashButton)nextMashButton ++;
