@@ -482,7 +482,7 @@ public class HitboxEditor extends javax.swing.JFrame {
     
     public void repaintPanel(){
         
-        Image currentImage = modules[moduleSelected].animation[frameSelected];
+        Image currentImage = modules[moduleSelected].animation_image[frameSelected];
         HitboxPoint[] hitboxframe = modules[moduleSelected].hitbox.animation[frameSelected];
 
         jPanel2.setImageAndHitboxes(currentImage,hitboxframe,hitboxSelected);

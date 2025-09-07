@@ -1,8 +1,6 @@
 package game;
 
-import engine.graphics.Textures;
-import engine.logic.Calcs;
-import java.awt.image.BufferedImage;
+import engine.graphics.NanoTextures;
 
 /**
  *
@@ -10,41 +8,41 @@ import java.awt.image.BufferedImage;
  */
 public class ModuleSelect {
     
-    public static BufferedImage background;
-    public static BufferedImage overlay;
-    public static BufferedImage unroll;
-    public static BufferedImage[] cursors;
+    public static Integer background;
+    public static Integer overlay;
+    public static Integer unroll;
+    public static Integer[] cursors;
     
-    public static BufferedImage[] slotPreviews;
-    public static BufferedImage[] eqippedPreviews;
-    public static BufferedImage[] playerPreviews;
+    public static Integer[] slotPreviews;
+    public static Integer[] eqippedPreviews;
+    public static Integer[] playerPreviews;
     
-    public static BufferedImage playerShadow;
+    public static Integer playerShadow;
     
     public static void loadImages(){
         
-        background = Textures.loadImage("/textures/moduleSelect/background.png");
-        unroll = Textures.loadImage("/textures/moduleSelect/paperUnroll.png");
-        overlay = Textures.loadImage("/textures/moduleSelect/overlay.png");
-        cursors = new BufferedImage[4];
+        background = NanoTextures.loadImage("/textures/moduleSelect/background.png");
+        unroll = NanoTextures.loadImage("/textures/moduleSelect/paperUnroll.png");
+        overlay = NanoTextures.loadImage("/textures/moduleSelect/overlay.png");
+        cursors = new Integer[4];
         for(int i = 0; i < 4; i ++){
-            cursors[i] = Textures.loadImage("/textures/moduleSelect/cursors/p" + (i+1) + ".png");
+            cursors[i] = NanoTextures.loadImage("/textures/moduleSelect/cursors/p" + (i+1) + ".png");
         }
         
-        slotPreviews = new BufferedImage[Modules.NUM_MODULES];
-        eqippedPreviews = new BufferedImage[Modules.NUM_MODULES];
+        slotPreviews = new Integer[Modules.NUM_MODULES];
+        eqippedPreviews = new Integer[Modules.NUM_MODULES];
         for(int i = 0; i < Modules.NUM_MODULES; i ++){
-            slotPreviews[i] = Textures.loadImage("/textures/moduleSelect/modulePreviews/"+i+".png");
-            eqippedPreviews[i] = Textures.loadImage("/textures/moduleSelect/equippedModules/"+i+".png");
+            slotPreviews[i] = NanoTextures.loadImage("/textures/moduleSelect/modulePreviews/"+i+".png");
+            eqippedPreviews[i] = NanoTextures.loadImage("/textures/moduleSelect/equippedModules/"+i+".png");
         }
         
         String[] centerNames = new String[]{"smiley","grin","dismay","stress","cyclops","drool"};
-        playerPreviews = new BufferedImage[centerNames.length];
+        playerPreviews = new Integer[centerNames.length];
         for(int i = 0; i < centerNames.length; i ++){
-            playerPreviews[i] = Textures.loadImage("/textures/moduleSelect/players/"+centerNames[i]+".png");
+            playerPreviews[i] = NanoTextures.loadImage("/textures/moduleSelect/players/"+centerNames[i]+".png");
         }
         
-        playerShadow = Textures.loadImage("/textures/moduleSelect/playerShadow.png");
+        playerShadow = NanoTextures.loadImage("/textures/moduleSelect/playerShadow.png");
         
     }
     

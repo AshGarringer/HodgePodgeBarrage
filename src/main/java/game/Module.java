@@ -4,9 +4,9 @@
  */
 package game;
 
+import engine.graphics.NanoTextures;
 import engine.graphics.Textures;
 import engine.logic.Calcs;
-import java.awt.Point;
 import java.awt.image.BufferedImage;
 
 /**
@@ -15,7 +15,8 @@ import java.awt.image.BufferedImage;
  */
 public class Module {
     
-    public BufferedImage[] animation;
+    public Integer[] animation;
+    public BufferedImage[] animation_image;
     
     public Hitbox hitbox;
     
@@ -25,7 +26,7 @@ public class Module {
     int frameTimer = 0;
     int length;
     
-    BufferedImage projectile;
+    Integer projectile;
     
     private boolean buffered = false;
     
@@ -33,16 +34,22 @@ public class Module {
         
         this.length = length;
         
-        animation = new BufferedImage[length];
+        animation = new Integer[length];
         
         for(int i = 0; i < length; i ++){
-            animation[i] = Textures.loadImage("/textures/modules/"+path+"/"+Calcs.fillInt(i) + ".png");
+            animation[i] = NanoTextures.loadImage("/textures/modules/"+path+"/"+Calcs.fillInt(i) + ".png");
+        }
+        
+        animation_image = new BufferedImage[length];
+        
+        for(int i = 0; i < length; i ++){
+            animation_image[i] = Textures.loadImage("/textures/modules/"+path+"/"+Calcs.fillInt(i) + ".png");
         }
          
         hitbox = new Hitbox(hitbox_string, length, damage, this);
         
         if(type == 5){
-            projectile = Textures.loadImage("/textures/modules/"+path+"/projectile.png");
+            projectile = NanoTextures.loadImage("/textures/modules/"+path+"/projectile.png");
         }
         
         for(int i = 0; i < hitbox.animation.length && startup == -1; i ++){
@@ -80,7 +87,7 @@ public class Module {
         }
     }
     
-    public BufferedImage getImage(){
+    public Integer getImage(){
         return animation[frame];
     }
     
@@ -88,7 +95,7 @@ public class Module {
         return hitbox.animation[frame];
     }
     
-    private Module(BufferedImage[] animation, Hitbox hitbox, int index,int startup, BufferedImage projectile){
+    private Module(Integer[] animation, Hitbox hitbox, int index,int startup, Integer projectile){
          this.animation = animation;
          this.hitbox = hitbox;
          this.hitbox.parent = this;
