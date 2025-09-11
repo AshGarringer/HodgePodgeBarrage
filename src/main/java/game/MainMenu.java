@@ -1,12 +1,14 @@
 package game;
 
-import engine.graphics.NanoTextures;
 import engine.graphics.SimpleAnimation;
-import engine.graphics.NanoTextures;
+import engine.graphics.Textures;
 import engine.input.SnesController;
 import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
 /**
@@ -15,10 +17,10 @@ import java.util.ArrayList;
  */
 public class MainMenu {
     
-    public static Integer background;
-    public static Integer[] words;
-    public static Integer logo;
-    public static Integer start;
+    public static BufferedImage background;
+    public static BufferedImage[] words;
+    public static BufferedImage logo;
+    public static BufferedImage start;
     
     static SimpleAnimation animation;
     private static SimpleAnimation logoX1;
@@ -28,17 +30,17 @@ public class MainMenu {
     private static SimpleAnimation startBob;
     private static SimpleAnimation backgroundScale;
     
-    private static Integer composite;
+    private static BufferedImage composite;
     
     public static void load(){
-        background = NanoTextures.loadImage("/textures/mainMenu/background.png");
-        words = new Integer[4];
-        words[0] = NanoTextures.loadImage("/textures/mainMenu/hodge.png");
-        words[1] = NanoTextures.loadImage("/textures/mainMenu/podge.png");
-        words[2] = NanoTextures.loadImage("/textures/mainMenu/robot.png");
-        words[3] = NanoTextures.loadImage("/textures/mainMenu/barrage.png");
-        start = NanoTextures.loadImage("/textures/mainMenu/start.png");
-        logo = NanoTextures.loadImage("/textures/mainMenu/logo.png");
+        background = Textures.loadImage("/textures/mainMenu/background.png");
+        words = new BufferedImage[4];
+        words[0] = Textures.loadImage("/textures/mainMenu/hodge.png");
+        words[1] = Textures.loadImage("/textures/mainMenu/podge.png");
+        words[2] = Textures.loadImage("/textures/mainMenu/robot.png");
+        words[3] = Textures.loadImage("/textures/mainMenu/barrage.png");
+        start = Textures.loadImage("/textures/mainMenu/start.png");
+        logo = Textures.loadImage("/textures/mainMenu/logo.png");
         
         animation = new SimpleAnimation(3500,false);
         animation.addHold(45);
@@ -70,46 +72,72 @@ public class MainMenu {
         backgroundScale.addMotion(1.04f, 1, 488, SimpleAnimation.SMOOTH);
     }
     
-    public static void render(int width, int height){
+    public static void render(Graphics2D g, Game game, int width, int height){
+        game.setHints(g);
+        
+        AffineTransform originalTransform = g.getTransform();
+        
+        if(composite == null){
+            composite = new BufferedImage(1905,509,BufferedImage.TYPE_INT_ARGB);
+        }
         
         if(!animation.isFinished()){
-            NanoTextures.fillRect(0, 0, width, height,Color.BLACK);
+            g.setColor(Color.BLACK);
+            g.fillRect(0, 0, width, height);
         }
         
         float scale1 = height / 1400f;
         float offset1 = (width / scale1 - 3500) / 2;
         
-        NanoTextures.scale(scale1, scale1);
-        NanoTextures.translate(offset1, 0);
+        AffineTransform mainTransform = new AffineTransform();
+        mainTransform.scale(scale1, scale1);
+        mainTransform.translate(offset1, 0);
+        g.setTransform(mainTransform);
+        
+        g.setClip(new Rectangle(-(int)offset1, 0, 3500, 1400));
 
         int logoX = 797;
         int logoY = 325;
         animation.tick();
         
         if(animation.getState() < 5){
-            NanoTextures.drawImage(composite, 797, 325);
+            g.drawImage(composite, 797, 325, game);
         }
         
         switch(animation.getState()){
             case 0: 
+                g.setTransform(originalTransform);
                 return;
             case 1:
-                NanoTextures.drawImage(MainMenu.words[0], logoX - animation.value(), logoY, null);
+                g.drawImage(MainMenu.words[0], logoX - animation.value(), logoY, null);
+                g.setTransform(originalTransform);
                 return;
             case 2:
-                NanoTextures.drawImage(MainMenu.words[0], logoX, logoY, null);
-                NanoTextures.drawImage(MainMenu.words[1], logoX, logoY - animation.value(), null);
+                if(animation.stateChanged()){
+                    Graphics cg = composite.getGraphics();
+                    cg.drawImage(MainMenu.words[0], 0, 0, null);
+                    g.drawImage(MainMenu.words[0], logoX, logoY, null);
+                }
+                g.drawImage(MainMenu.words[1], logoX, logoY - animation.value(), null);
+                g.setTransform(originalTransform);
                 return;
             case 3:
-                NanoTextures.drawImage(MainMenu.words[0], logoX, logoY, null);
-                NanoTextures.drawImage(MainMenu.words[1], logoX, logoY, null);
-                NanoTextures.drawImage(MainMenu.words[2], logoX, logoY + animation.value(), null);
+                if(animation.stateChanged()){
+                    Graphics cg = composite.getGraphics();
+                    cg.drawImage(MainMenu.words[1], 0, 0, null);
+                    g.drawImage(MainMenu.words[1], logoX, logoY, null);
+                }
+                g.drawImage(MainMenu.words[2], logoX, logoY + animation.value(), null);
+                g.setTransform(originalTransform);
                 return;
             case 4:
-                NanoTextures.drawImage(MainMenu.words[0], logoX, logoY, null);
-                NanoTextures.drawImage(MainMenu.words[1], logoX, logoY, null);
-                NanoTextures.drawImage(MainMenu.words[2], logoX, logoY, null);
-                NanoTextures.drawImage(MainMenu.words[3], logoX + animation.value(), logoY, null);
+                if(animation.stateChanged()){
+                    Graphics cg = composite.getGraphics();
+                    cg.drawImage(MainMenu.words[2], 0, 0, null);
+                    g.drawImage(MainMenu.words[2], logoX, logoY, null);
+                }
+                g.drawImage(MainMenu.words[3], logoX + animation.value(), logoY, null);
+                g.setTransform(originalTransform);
                 return;
         }
         
@@ -120,31 +148,40 @@ public class MainMenu {
         startBob.tick();
         backgroundScale.tick();
 
-        NanoTextures.translate(1750, 700);
-        NanoTextures.scale(backgroundScale.valueFloat(), backgroundScale.valueFloat());
-        NanoTextures.drawImage(MainMenu.background,-1750, -700, null);
-        NanoTextures.scale(1/backgroundScale.valueFloat(), 1/backgroundScale.valueFloat());
-        NanoTextures.translate(-1750, -700);
-        
+        AffineTransform backgroundTransform = new AffineTransform(mainTransform);
+        backgroundTransform.translate(1750, 700);
+        backgroundTransform.scale(backgroundScale.valueFloat(), backgroundScale.valueFloat());
+        backgroundTransform.translate(-1750, -700);
+        g.setTransform(backgroundTransform);
+        g.drawImage(MainMenu.background, 0, 0, null);
+
+        AffineTransform logoTransform = new AffineTransform(mainTransform);
         float logoFinalX = 1749 + logoX1.valueFloat() + logoX2.valueFloat();
         float logoFinalY = 584 + logoY1.valueFloat();
-        NanoTextures.translate(logoFinalX, logoFinalY);
-        NanoTextures.scale(logoScale.valueFloat(), logoScale.valueFloat());
-        
-        NanoTextures.drawImage(MainMenu.logo, -1905/2, -509/2, null);
-        
-        NanoTextures.scale(1/logoScale.valueFloat(), 1/logoScale.valueFloat());
-        NanoTextures.translate(-logoFinalX, -logoFinalY);
+        logoTransform.translate(logoFinalX, logoFinalY);
+        logoTransform.scale(logoScale.valueFloat(), logoScale.valueFloat());
+        logoTransform.translate(-MainMenu.logo.getWidth()/2, -MainMenu.logo.getHeight()/2);
+        g.setTransform(logoTransform);
+        g.drawImage(MainMenu.logo, 0, 0, null);
 
-        NanoTextures.translate(1530, 1000 + startBob.value());
-        NanoTextures.drawImage(MainMenu.start, 0, 0, null);
-        NanoTextures.translate(-1530, -1000 - startBob.value());
+        AffineTransform startTransform = new AffineTransform(mainTransform);
+        startTransform.translate(1530, 1000 + startBob.value());
+        g.setTransform(startTransform);
+        g.drawImage(MainMenu.start, 0, 0, null);
 
         if(!animation.isFinished()){
-            NanoTextures.fillRect(0, 0, 3500, 1400, new Color(255, 255, 255, animation.value()));
+            g.setTransform(mainTransform);
+            g.setColor(new Color(255, 255, 255, animation.value()));
+            g.fillRect(0, 0, 3500, 1400);
         }
+
+        g.setTransform(originalTransform);
         
         ArrayList<Integer> controllerIds = SnesController.updateControllers();
-        NanoTextures.resetTransform();
+
+        if(game.state.isTransit()){
+            g.setColor(new Color(0, 0, 0, (int)(255 * game.state.getTransit())));
+            g.fillRect(0, 0, width, height);
+        }
     }
 }

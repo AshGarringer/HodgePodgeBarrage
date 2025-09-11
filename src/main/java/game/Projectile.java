@@ -4,7 +4,7 @@
  */
 package game;
 
-import engine.graphics.NanoTextures;
+import java.awt.image.BufferedImage;
 
 /**
  *
@@ -16,13 +16,13 @@ public class Projectile {
     float y;
     float xVel;
     float yVel;
-    Integer image;
+    BufferedImage image;
     double rotation;
     int timer;
     int parent;
     int damage;
     
-    public Projectile(float x, float y, float xVel, float yVel, Integer image, double rotation, int parent){
+    public Projectile(float x, float y, float xVel, float yVel, BufferedImage image, double rotation, int parent){
         this.x = x;
         this.y = y;
         this.xVel = xVel;
@@ -41,7 +41,7 @@ public class Projectile {
     }
     
     public HitboxPoint getHitbox(){
-        return new HitboxPoint((int)x,(int)y,NanoTextures.getWidth(image),1,damage,this, true);
+        return new HitboxPoint((int)x,(int)y,image.getWidth(),1,damage,this, true);
     }
     
     public void reflect(int newParent){

@@ -4,7 +4,6 @@
  */
 package game;
 
-import engine.graphics.NanoTextures;
 import engine.input.SnesController;
 import engine.logic.Calcs;
 import java.awt.AlphaComposite;
@@ -182,44 +181,44 @@ public class Player {
         }
     }
     
-    public void drawPlayerPreview(boolean drawMouse) {
+    public void drawPlayerPreview(Graphics2D g, boolean drawMouse) {
         
         int col = playerNum % 2;
         int row = playerNum / 2;
         int x = 1220 + col * 1160;
         int y = 375 + row * 650;
         
-        NanoTextures.drawImage(ModuleSelect.playerShadow, x-225,y-225,null);
+        g.drawImage(ModuleSelect.playerShadow, x-225,y-225,null);
         
-        NanoTextures.translate(x, y);
+        g.translate(x, y);
 
         if (Players.centersTilted[center])
-            NanoTextures.rotate(-Math.PI / 4f);
+            g.rotate(-Math.PI / 4f);
 
         int hovered = playerHover;
         boolean previewDrawn = false;
         
         for (int i = 0; i < 4; i++) {
             if (moduleSelections[i] >= 0)
-                NanoTextures.drawImage(ModuleSelect.eqippedPreviews[moduleSelections[i]], -160, -330, null);
+                g.drawImage(ModuleSelect.eqippedPreviews[moduleSelections[i]], -160, -330, null);
             else if(!previewDrawn && hovered >= 0 ){
                 previewDrawn = true;
-//                Composite oldComp = NanoTextures.getComposite();
-//                NanoTextures.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f));
-//                NanoTextures.drawImage(ModuleSelect.eqippedPreviews[hovered], -160, -330, null);
-//                NanoTextures.setComposite(oldComp);
+                Composite oldComp = g.getComposite();
+                g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f));
+                g.drawImage(ModuleSelect.eqippedPreviews[hovered], -160, -330, null);
+                g.setComposite(oldComp);
             }
-            NanoTextures.rotate(Math.PI / 2);
+            g.rotate(Math.PI / 2);
         }
         if (Players.centersTilted[center])
-            NanoTextures.rotate(Math.PI / 4f);
+            g.rotate(Math.PI / 4f);
 
-        NanoTextures.drawImage(ModuleSelect.playerPreviews[center], -160, -160, null);
+        g.drawImage(ModuleSelect.playerPreviews[center], -160, -160, null);
 
-        NanoTextures.translate(-x, -y);
+        g.translate(-x, -y);
         if (drawMouse)
-            NanoTextures.drawImage(ModuleSelect.cursors[playerNum], Math.round(mouse[0]) - 100,
-                    Math.round(mouse[1]) - 100, 200, 200);
+            g.drawImage(ModuleSelect.cursors[playerNum], Math.round(mouse[0]) - 100,
+                    Math.round(mouse[1]) - 100, 200, 200, null);
     }
     
     int pressButtonTimer = 10;
@@ -291,7 +290,7 @@ public class Player {
 //                    }
 //                    lastPressTime = System.currentTimeMillis();
                 }
-                    }
+            }
             controller.clearPressed();
 
             if(deathLevel >= 100){
@@ -518,16 +517,16 @@ public class Player {
         rotation = lastR;
     }
     
-    public void renderGame(){
+    public void renderGame(Graphics2D g){
         
         if(!alive){
-//            NanoTextures.drawImage(Players.charredRemains, (int)x-60,(int)y-60,120,120,null);
+//            g.drawImage(Players.charredRemains, (int)x-60,(int)y-60,120,120,null);
             return;
         }
         
         if(explosionFrame > 0){
-//            NanoTextures.drawImage(Players.charredRemains, (int)x-60,(int)y-60,120,120,null);
-            NanoTextures.drawImage(Players.explosion[explosionFrame], (int)x - 120,(int)y-120,null);
+//            g.drawImage(Players.charredRemains, (int)x-60,(int)y-60,120,120,null);
+            g.drawImage(Players.explosion[explosionFrame], (int)x - 120,(int)y-120,null);
             
             
             explosionFrame ++;
@@ -567,100 +566,106 @@ public class Player {
             if(damage >= 200 && deathVelocity <= 0 && deathLevel <= 0)level = 4;
 
             // 1. Create an offscreen buffer (now 240x240)
-//            BufferedImage playerBuffer = new BufferedImage(240, 240, BufferedImage.TYPE_INT_ARGB);
-//            Graphics2D gPlayer = playerBuffer.createGraphics();
-
-            Color tint = new Color(255,0,0,(int)(Math.sin(System.currentTimeMillis() * 0.1)*(level * 85)));
+            BufferedImage playerBuffer = new BufferedImage(240, 240, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D gPlayer = playerBuffer.createGraphics();
 
             // 2. Draw player and modules to the buffer, centered
-            
-            NanoTextures.drawImage(Players.shadow, (int)x2-50,(int)y2-50, null);
-            
-            NanoTextures.translate(x2, x2); // Center the drawing in the larger buffer
-            NanoTextures.rotate(rotation);
+            gPlayer.translate(120, 120); // Center the drawing in the larger buffer
+            gPlayer.rotate(rotation);
             for (int i = 0; i < 4; i++) {
-                Integer image = modules[i].getImage();
-                NanoTextures.drawImage(image, -40, -120, tint);
-                NanoTextures.rotate(Math.PI / 2);
+                BufferedImage image = modules[i].getImage();
+                gPlayer.drawImage(image, -40, -120, null);
+                gPlayer.rotate(Math.PI / 2);
             }
-            if(Players.centersTilted[center])NanoTextures.rotate((float)Math.PI/4f);
-            NanoTextures.drawImage(Players.centers[center], -40, -40, tint);
-            if(Players.centersTilted[center])NanoTextures.rotate(-(float)Math.PI/4f);
-            NanoTextures.rotate(HIGHLIGHT_ANGLE - rotation);
-            NanoTextures.drawImage(Players.highlight, -40, -40, tint);
-            NanoTextures.rotate(-HIGHLIGHT_ANGLE + rotation);
-            if(Players.centersTilted[center])NanoTextures.rotate((float)Math.PI/4f);
-            NanoTextures.drawImage(Players.centerOverlays[center], -40, -40, tint);
-            if(Players.centersTilted[center])NanoTextures.rotate(-(float)Math.PI/4f);
+            if(Players.centersTilted[center])gPlayer.rotate((float)Math.PI/4f);
+            gPlayer.drawImage(Players.centers[center], -40, -40, null);
+            if(Players.centersTilted[center])g.rotate(-(float)Math.PI/4f);
+            gPlayer.rotate(HIGHLIGHT_ANGLE - rotation);
+            gPlayer.drawImage(Players.highlight, -40, -40, 80, 80, null);
+            gPlayer.rotate(-HIGHLIGHT_ANGLE + rotation);
+            if(Players.centersTilted[center])g.rotate((float)Math.PI/4f);
+            gPlayer.drawImage(Players.centerOverlays[center], -40, -40, null);
+            if(Players.centersTilted[center])gPlayer.rotate(-(float)Math.PI/4f);
+            gPlayer.dispose();
 
+            // 3. Draw the flash animation using SRC_ATOP
+            Graphics2D gFlash = playerBuffer.createGraphics();
+            gFlash.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, 0.7f));
+            g.translate(x2-x, y2-x);
+            gFlash.drawImage(Players.flashes[level][damageFrame], 40, 40, null); // Center the 160x160 flash in 240x240
+            g.translate(-x2+x, -y2+x);
+            gFlash.dispose();
+
+            g.drawImage(Players.shadow, (int)x2-50,(int)y2-50, null);
             // 4. Draw the result to the main graphics context
+            g.drawImage(playerBuffer, (int)x2 - 120, (int)y2 - 120, null);
 
             // 5. Draw the damage overlay as before (optional)
             
-            NanoTextures.translate(x2, y2);
-            NanoTextures.rotate(rotation);
-            if(Players.centersTilted[center])NanoTextures.rotate((float)Math.PI/4f);
-            NanoTextures.drawImage(Players.damaged[level][damageFrame], -50, -50, null);
-            if(Players.centersTilted[center])NanoTextures.rotate(-(float)Math.PI/4f);
-            NanoTextures.rotate(-rotation);
-            NanoTextures.translate(-x2, -y2);
+            g.translate(x2, y2);
+            g.rotate(rotation);
+            if(Players.centersTilted[center])g.rotate((float)Math.PI/4f);
+            g.drawImage(Players.damaged[level][damageFrame], -50, -50, null);
+            if(Players.centersTilted[center])g.rotate(-(float)Math.PI/4f);
+            g.rotate(-rotation);
+            g.translate(-x2, -y2);
             damageFrame++;
             if (damageFrame >= 24) damageFrame = 0;
         } else {
             // Draw player and modules as before if not flashing
-            NanoTextures.translate(x2, y2);
-            NanoTextures.drawImage(Players.shadow, -50,-50, null);
-            NanoTextures.rotate(rotation);
+            g.translate(x2, y2);
+            g.drawImage(Players.shadow, -50,-50, null);
+            g.rotate(rotation);
             for (int i = 0; i < 4; i++) {
-                Integer image = modules[i].getImage();
-                NanoTextures.drawImage(image, -40, -120, null);
-                NanoTextures.rotate(Math.PI / 2);
+                BufferedImage image = modules[i].getImage();
+                g.drawImage(image, -40, -120, null);
+                g.rotate(Math.PI / 2);
             }
-            if(Players.centersTilted[center])NanoTextures.rotate((float)Math.PI/4f);
-            NanoTextures.drawImage(Players.centers[center], -40, -40, null);
-            if(Players.centersTilted[center])NanoTextures.rotate(-(float)Math.PI/4f);
-            NanoTextures.rotate(HIGHLIGHT_ANGLE - rotation);
-            NanoTextures.drawImage(Players.highlight, -40, -40, null);
-            NanoTextures.rotate(-HIGHLIGHT_ANGLE + rotation);
-            if(Players.centersTilted[center])NanoTextures.rotate((float)Math.PI/4f);
-            NanoTextures.drawImage(Players.centerOverlays[center], -40, -40, null);
-            if(Players.centersTilted[center])NanoTextures.rotate(-(float)Math.PI/4f);
-            NanoTextures.rotate(-rotation);
-            NanoTextures.translate(-x2, -y2);
+            if(Players.centersTilted[center])g.rotate((float)Math.PI/4f);
+            g.drawImage(Players.centers[center], -40, -40, null);
+            if(Players.centersTilted[center])g.rotate(-(float)Math.PI/4f);
+            g.rotate(HIGHLIGHT_ANGLE - rotation);
+            g.drawImage(Players.highlight, -40, -40, 80, 80, null);
+            g.rotate(-HIGHLIGHT_ANGLE + rotation);
+            if(Players.centersTilted[center])g.rotate((float)Math.PI/4f);
+            g.drawImage(Players.centerOverlays[center], -40, -40, null);
+            if(Players.centersTilted[center])g.rotate(-(float)Math.PI/4f);
+            g.rotate(-rotation);
+            g.translate(-x2, -y2);
         }
         if(numButtons > 0 || deathVelocity > 0 || deathLevel > 0){
             x2 += (x-x2)*0.6f;
             y2 += (y-y2)*0.6f;
             
-            NanoTextures.translate(x2,y2);
+            g.translate(x2,y2);
             if(mash)
-                NanoTextures.drawImage(Players.mash[mashButton][mashFrame], -20,-20, null);
+                g.drawImage(Players.mash[mashButton][mashFrame], -20,-20, null);
             else{
-                NanoTextures.drawImage(Players.skillCheckBack, -35,-35, null);
-                NanoTextures.drawImage(Players.skillCheck[mashButton][mashFrame], -35,-35, null);
+                g.drawImage(Players.skillCheckBack, -35,-35, null);
+                g.drawImage(Players.skillCheck[mashButton][mashFrame], -35,-35, null);
                 if(numButtons > 1)
-                    NanoTextures.drawImage(Players.skillCheckNext[nextMashButton], -35,-35, null);
+                    g.drawImage(Players.skillCheckNext[nextMashButton], -35,-35, null);
             }
             if(deathLevel > 40)
-                NanoTextures.drawImage(Players.sparks[sparkFrame], -60,-60, null);
-            NanoTextures.translate(-x2,-y2);
+                g.drawImage(Players.sparks[sparkFrame], -60,-60, null);
+            g.translate(-x2,-y2);
         }
             
         if(DRAW_HITBOXES){
             int lastType = -1;
             for(int i = 0; i < hitboxes.length; i ++){
                 HitboxPoint hp = hitboxes[i];
-                Color color = HITBOX4;
                 if(hp.type != lastType){
                     lastType = hp.type;
                     switch(hp.type){
-                        case 0:color = HITBOX0;break;
-                        case 1:color = HITBOX1;break;
-                        case 2:color = HITBOX2;break;
-                        case 3:color = HITBOX3;break;
+                        case 0:g.setColor(HITBOX0);break;
+                        case 1:g.setColor(HITBOX1);break;
+                        case 2:g.setColor(HITBOX2);break;
+                        case 3:g.setColor(HITBOX3);break;
+                        default:g.setColor(HITBOX4);break;
                     }
                 }
-//                NanoTextures.fillOval(hp.x-hp.radius,hp.y-hp.radius,hp.radius*2,hp.radius*2);
+                g.fillOval(hp.x-hp.radius,hp.y-hp.radius,hp.radius*2,hp.radius*2);
             }
         }
     }

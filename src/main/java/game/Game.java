@@ -1,13 +1,15 @@
 package game;
 
+import engine.framework.Engine;
 import engine.framework.MultiState;
-import engine.framework.NewEngine;
-import engine.graphics.NanoTextures;
 import engine.graphics.Text;
+import engine.graphics.Textures;
 import engine.input.SnesController;
 import engine.sound.LwjglAudioManager;
+import engine.sound.SoundPlayer;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -15,7 +17,7 @@ import java.util.Random;
  *
  * @author cookibot
  */
-public class Game extends NewEngine {
+public class Game extends Engine {
     
     public static int WINDOW_WIDTH = 1600;
     public static int WINDOW_HEIGHT = 900;
@@ -34,25 +36,21 @@ public class Game extends NewEngine {
     
     Random random;
     
-    Integer map;
+    BufferedImage map;
     
     private LwjglAudioManager audioManager;
     Thread load;
     boolean loaded;
 
     public Game(){
+        init();
+        map = Textures.loadImage("/textures/maps/demo.png");
         this.start("HodgePodgeRobotBarrage", 1600, 900, true);
     }
     
-    @Override
-    public void loadLinear(){
-//        map = NanoTextures.loadImage("/textures/maps/demo.png");
+    public final void init(){
         state = new MultiState(0);
         text = new Text("Regular",40,Color.white);
-    }
-    
-    @Override
-    public final void load(){
         load = new Thread(){
             @Override
             public void run(){
@@ -61,7 +59,6 @@ public class Game extends NewEngine {
                 text2 = new Text("Regular2",30,Color.white, 5, Color.black, true);
                 text3 = new Text("Fancy",80,Color.black,5, Color.white, true);
                 random = new Random();
-                System.out.println(window.initialized);
                 modules = Modules.getModules();
                 Players.loadImages();
                 ModuleSelect.loadImages();
@@ -158,8 +155,7 @@ public class Game extends NewEngine {
                 }
                 if(tbr >= 0)projectiles.remove(tbr);
                 if(restart){
-                    loadLinear();
-                    load();
+                    init();
                 }
                 break;
             case 4:
@@ -172,38 +168,33 @@ public class Game extends NewEngine {
     }
 
     @Override
-    public void render() {
-        
-        NanoTextures.fillRect(0, 0, getWidth(), getHeight(), Color.BLACK);
+    public void render(Graphics2D g) {
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
         int width = window.getWidth();
         int height = window.getHeight();
 
         switch (state.state()) {
             case 0:
-//                NanoTextures.setColor(Color.black);
-                NanoTextures.fillRect(0, 0, width, height,Color.black);
-//                text.drawString(width/2, height/2, "Loading", g);
+                g.setColor(Color.black);
+                g.fillRect(0, 0, width, height);
+                text.drawString(width/2, height/2, "Loading", g);
                 break;
             case 1:
                 // main menu
-//                this.setHints(g);
-                MainMenu.render(width,height);
-                
-                if(state.isTransit()){
-                    NanoTextures.fillRect(0, 0, width, height,new Color(0, 0, 0, (int)(255 * state.getTransit())));
-                }
+                this.setHints(g);
+                MainMenu.render(g,this,width,height);
                 break;
 
             case 2:
-//                this.setHints(g);
+                this.setHints(g);
                 float scale2 = window.getHeight() / 1400f;
                 float offset2 = (window.getWidth() / scale2 - 3600) / 2;
 
-                NanoTextures.scale(scale2, scale2);
-                NanoTextures.translate(offset2, 0);
+                g.scale(scale2, scale2);
+                g.translate(offset2, 0);
 
-                NanoTextures.drawImage(ModuleSelect.background, 0, 0);
+                g.drawImage(ModuleSelect.background, 0, 0, null);
 
                 for (int i = 0; i < modules.length; i++) {
                     int col = i % 2;
@@ -211,41 +202,43 @@ public class Game extends NewEngine {
                     int x = 1530 + col * 270;
                     int y = 100 + row * 200;   
 
-                    Integer preview = ModuleSelect.slotPreviews[i];
-                    NanoTextures.drawImage(preview, x, y, 270, 200);
+                    BufferedImage preview = ModuleSelect.slotPreviews[i];
+                    g.drawImage(preview, x, y, 270, 200, null);
                 }
                
                 for (Player player : players) {
-                    player.drawPlayerPreview(state.getTransit() >= 0);
+                    player.drawPlayerPreview(g, state.getTransit() >= 0);
                 }
-                NanoTextures.drawImage(ModuleSelect.overlay,0,0);
+                g.drawImage(ModuleSelect.overlay,0,0,null);
 
                 if(state.getTransit() < 0){
-                    NanoTextures.drawImage(ModuleSelect.unroll, -400 + (int)(Math.cos((-Math.PI/2)*state.getTransit())*4000), 0, 4000, 1400);
+                    g.drawImage(ModuleSelect.unroll, -400 + (int)(Math.cos((-Math.PI/2)*state.getTransit())*4000), 0, 4000, 1400, this);
                 }
-                NanoTextures.translate(offset2, 0);
-                NanoTextures.scale(scale2, scale2);
+                g.translate(offset2, 0);
+                g.scale(scale2, scale2);
                 // 1220, 375
 
                 // module select
                 break;
 
             case 3:
-                NanoTextures.fillRect(0, 0, width, height,Color.white);
                 
-                NanoTextures.translate(width / 2, height / 2);
-                NanoTextures.drawImage(map, -WINDOW_WIDTH/2 -50, -WINDOW_HEIGHT/2-50,null);
-                drawStats();
+                g.setColor(Color.white);
+                g.fillRect(0, 0, width, height);
+                
+                g.translate(width / 2, height / 2);
+                g.drawImage(map, -WINDOW_WIDTH/2 -50, -WINDOW_HEIGHT/2-50,null);
+                drawStats(g);
                 for (int i = 0; i < players.size(); i++) {
-                    players.get(i).renderGame();
+                    players.get(i).renderGame(g);
                 }
                 checkCollisions();
                 if(winner >= 0){
-//                    text2.drawString(0, 0, "PLAYER "+(winner+1)+" WINS!", g);
+                    text2.drawString(0, 0, "PLAYER "+(winner+1)+" WINS!", g);
                 }
                 
                 for (Projectile projectile : projectiles) {
-                    NanoTextures.drawImage(projectile.image, (int)projectile.x,(int)projectile.y, null);
+                    g.drawImage(projectile.image, (int)projectile.x,(int)projectile.y, null);
                 }
                 break;
             case 4:
@@ -254,23 +247,23 @@ public class Game extends NewEngine {
         }
     }
     
-    public void drawStats() {
+    public void drawStats(Graphics g) {
 
         int width = window.getWidth();
         int height = window.getHeight();
-        NanoTextures.translate(-(int)(width/2f), -(int)(height/2f));
+        g.translate(-(int)(width/2f), -(int)(height/2f));
 
-//        text2.drawString(10, 10, (String) ("Player 1: " + players.get(0).damage).replace('0', 'O'), 1, -1, g);
-//        if(players.size() > 1){
-//            text2.drawString(width -10, 10, (String) ("Player 2: " + players.get(1).damage).replace('0', 'O'), -1, -1, g);
-//            if(players.size() > 2){
-//                text2.drawString(10, height-10, (String) ("Player 3: " + players.get(2).damage).replace('0', 'O'), 1, 1, g);
-//                if(players.size() > 3)
-//                text2.drawString(width-10, height-10, (String) ("Player 4: " + players.get(3).damage).replace('0', 'O'), -1, 1, g);
-//            }
-//        }
+        text2.drawString(10, 10, (String) ("Player 1: " + players.get(0).damage).replace('0', 'O'), 1, -1, g);
+        if(players.size() > 1){
+            text2.drawString(width -10, 10, (String) ("Player 2: " + players.get(1).damage).replace('0', 'O'), -1, -1, g);
+            if(players.size() > 2){
+                text2.drawString(10, height-10, (String) ("Player 3: " + players.get(2).damage).replace('0', 'O'), 1, 1, g);
+                if(players.size() > 3)
+                text2.drawString(width-10, height-10, (String) ("Player 4: " + players.get(3).damage).replace('0', 'O'), -1, 1, g);
+            }
+        }
         
-        NanoTextures.translate((int)(width/2f),(int)(height/2f));
+        g.translate((int)(width/2f),(int)(height/2f));
 
     }
     
@@ -413,17 +406,9 @@ public class Game extends NewEngine {
         }
     }
     
-    int errorCounter = 0;
-    
-    @Override
     public boolean handleError(Exception e){
-        e.printStackTrace();
-        errorCounter ++;
-        if(errorCounter <= 100){
-            errorCounter = 0;
-            return true;
-        }
-        return false;
+        init();
+        return true;
     }
 
     private int getModuleIndexForHitbox(Player player, HitboxPoint hitbox) {
