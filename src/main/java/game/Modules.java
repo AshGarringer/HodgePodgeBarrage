@@ -36,8 +36,8 @@ public class Modules {
         
         modules[0] = new Module("spike", safelyGetString(hitboxes,1), 9, safelyGetValue(damages,0),0);
         modules[1] = new Module("spear", safelyGetString(hitboxes,2), 23, safelyGetValue(damages,1),1);
-        modules[2] = new Module("saw", safelyGetString(hitboxes,3), 26, safelyGetValue(damages,2),2);
-        modules[3] = new Module("shield", safelyGetString(hitboxes,4), 32, safelyGetValue(damages,3),3);
+        modules[2] = new Module("saw", safelyGetString(hitboxes,3), 8, 2, 4, safelyGetValue(damages,2),2);
+        modules[3] = new Module("shield", safelyGetString(hitboxes,4), 5,4,1, safelyGetValue(damages,3),3);
         modules[4] = new Module("quickshield", safelyGetString(hitboxes,5), 12, safelyGetValue(damages,4),4);
         modules[5] = new Module("shooter", safelyGetString(hitboxes,6), 10, safelyGetValue(damages,5),5);
         modules[6] = new Module("reflector", safelyGetString(hitboxes,7), 13, safelyGetValue(damages,6),6);

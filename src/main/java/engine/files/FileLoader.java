@@ -68,7 +68,10 @@ public class FileLoader {
             java.nio.file.Files.deleteIfExists(path);
             java.nio.file.Files.write(path, s.getBytes(), StandardOpenOption.CREATE_NEW);
         } catch (IOException ex) {
+            
             System.out.println("could not rewrite file");
+            
+            ex.printStackTrace();
         }
     }
     

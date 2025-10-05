@@ -28,7 +28,10 @@ public class MainMenu {
     private static SimpleAnimation logoY1;
     private static SimpleAnimation logoScale;
     private static SimpleAnimation startBob;
+    private static boolean notStarted = true;
     private static SimpleAnimation backgroundScale;
+    private static SimpleAnimation startVibrate;
+    private static SimpleAnimation startDrop;
     
     private static BufferedImage composite;
     
@@ -52,6 +55,13 @@ public class MainMenu {
         }
         animation.addMotion(255, 0, 80, SimpleAnimation.MOVE_EVEN);
         
+        startVibrate  = new SimpleAnimation(false);
+        startVibrate.AddVibrate(15, 3f, 25);
+        startDrop  = new SimpleAnimation(0,false);
+        startDrop.addHold(40);
+        startDrop.addMotion(0, -50, 15, SimpleAnimation.SMOOTH);
+        startDrop.addMotion(-50, 500, 25, SimpleAnimation.SPEED_TOWARDS,2/3f);
+        
         logoX1 = new SimpleAnimation(true);
         logoX1.addMotion(-5, 5, 103, SimpleAnimation.SMOOTH);
         logoX1.addMotion(5, -5, 103, SimpleAnimation.SMOOTH);
@@ -72,7 +82,7 @@ public class MainMenu {
         backgroundScale.addMotion(1.04f, 1, 488, SimpleAnimation.SMOOTH);
     }
     
-    public static void render(Graphics2D g, Game game, int width, int height){
+    public static void render(Graphics2D g, Game game, int width, int height, float transit){
         game.setHints(g);
         
         AffineTransform originalTransform = g.getTransform();
@@ -82,8 +92,7 @@ public class MainMenu {
         }
         
         if(!animation.isFinished()){
-            g.setColor(Color.BLACK);
-            g.fillRect(0, 0, width, height);
+            Textures.fillRect(0, 0, width, height, Color.black, g);
         }
         
         float scale1 = height / 1400f;
@@ -96,6 +105,15 @@ public class MainMenu {
         
         g.setClip(new Rectangle(-(int)offset1, 0, 3500, 1400));
 
+        if(transit > 0){
+            startVibrate.tick();
+            startDrop.tick();
+            
+            Textures.fillRect(0, 0, 3500, 1400, Color.black, g);
+            g.drawImage(MainMenu.start, 1530+startVibrate.value(), 1000+startDrop.value(), null);
+            return;
+        }
+        
         int logoX = 797;
         int logoY = 325;
         animation.tick();
@@ -171,17 +189,16 @@ public class MainMenu {
 
         if(!animation.isFinished()){
             g.setTransform(mainTransform);
-            g.setColor(new Color(255, 255, 255, animation.value()));
-            g.fillRect(0, 0, 3500, 1400);
+            Textures.fillRect(0, 0, 3500, 1400, new Color(255, 255, 255, animation.value()), g,true);
         }
 
         g.setTransform(originalTransform);
         
         ArrayList<Integer> controllerIds = SnesController.updateControllers();
 
-        if(game.state.isTransit()){
-            g.setColor(new Color(0, 0, 0, (int)(255 * game.state.getTransit())));
-            g.fillRect(0, 0, width, height);
-        }
+//        if(game.state.isTransit()){
+//            g.setColor(new Color(0, 0, 0, (int)(255 * game.state.getTransit())));
+//            g.fillRect(0, 0, width, height);
+//        }
     }
 }

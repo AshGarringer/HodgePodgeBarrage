@@ -141,4 +141,20 @@ public class Textures {
         }
         return images;
     }
+    
+    public static void fillRect(int x, int y, int width, int height, Color color, Graphics2D g){
+        fillRect(x,y,width,height,color,g,false);
+    }
+    
+    public static void fillRect(int x, int y, int width, int height, Color color, Graphics2D g, boolean alpha){
+        BufferedImage tinyImage;
+        if(alpha) tinyImage = new BufferedImage(1,1,BufferedImage.TYPE_INT_ARGB);
+        else tinyImage = new BufferedImage(1,1,BufferedImage.TYPE_INT_RGB);
+        Graphics bg = tinyImage.createGraphics();
+        bg.setColor(color);
+        bg.fillRect(0, 0, 1, 1);
+        bg.dispose();
+        
+        g.drawImage(tinyImage, x, y, width, height,null);
+    }
 }

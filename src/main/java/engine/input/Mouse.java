@@ -15,7 +15,6 @@ import java.util.LinkedList;
  */
 public class Mouse implements MouseListener, MouseMotionListener, MouseWheelListener {
     
-    
     int last_pressed;
     int last_clicked;
     int scroll_amount;

@@ -25,13 +25,27 @@ public class Module {
     int frameTimer = 0;
     int length;
     
+    public boolean loop;
+    int loop_start = 0;
+    int loop_length = 0;
+    boolean held = false;
+    
     BufferedImage projectile;
     
     private boolean buffered = false;
     
     public Module(String path, String hitbox_string, int length, int damage, int type){
+        this(path,hitbox_string,length,0,0,damage,type);
+    }
+    public Module(String path, String hitbox_string, int length, int loop_start, int loop_length, int damage, int type){
         
         this.length = length;
+        
+        if(loop_length != 0){
+            loop = true;
+            this.loop_start = loop_start;
+            this.loop_length = loop_length;
+        }
         
         animation = new BufferedImage[length];
         
@@ -62,6 +76,13 @@ public class Module {
             if(frame > 0){
                 frame ++;
             }
+            if(loop && held && frame == loop_start + loop_length){
+                frame = loop_start;
+                held = false;
+            }
+            else if (loop && !held && frame >= loop_start && frame < loop_start + loop_length){
+                frame = loop_start + loop_length;
+            }
             if(frame >= animation.length){
                 frame = 0;
                 if(buffered)activate();
@@ -80,6 +101,10 @@ public class Module {
         }
     }
     
+    public void hold(){
+        held = true;
+    }
+    
     public BufferedImage getImage(){
         return animation[frame];
     }
@@ -88,15 +113,18 @@ public class Module {
         return hitbox.animation[frame];
     }
     
-    private Module(BufferedImage[] animation, Hitbox hitbox, int index,int startup, BufferedImage projectile){
+    private Module(BufferedImage[] animation, int loop_start, int loop_length, Hitbox hitbox, int index, int startup, BufferedImage projectile){
          this.animation = animation;
          this.hitbox = hitbox;
+         this.loop_start = loop_start;
+         this.loop_length = loop_length;
+         if(loop_start != 0)loop = true;
          this.hitbox.parent = this;
          this.startup = startup;
          this.projectile = projectile;
     }
     
     public Module duplicate(int index){
-        return new Module(animation,hitbox,index,startup,projectile);
+        return new Module(animation,loop_start,loop_length,hitbox,index,startup,projectile);
     }
 }

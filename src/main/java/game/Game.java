@@ -27,6 +27,7 @@ public class Game extends Engine {
     
     ArrayList<Player> players;
     ArrayList<Projectile> projectiles;
+    Map map;
 
     Text text;
     Text text2;
@@ -36,15 +37,12 @@ public class Game extends Engine {
     
     Random random;
     
-    BufferedImage map;
-    
     private LwjglAudioManager audioManager;
     Thread load;
     boolean loaded;
 
     public Game(){
         init();
-        map = Textures.loadImage("/textures/maps/demo.png");
         this.start("HodgePodgeRobotBarrage", 1600, 900, true);
     }
     
@@ -89,11 +87,11 @@ public class Game extends Engine {
             case 1:
                 // main menu
                 if(state.isTransit())break;
-                if(MainMenu.animation.getFrame() == 60)
-                    audioManager.playMusic("ThemeIntro.ogg", "ThemeLoop.ogg");
+//                if(MainMenu.animation.getFrame() == 60)
+//                    audioManager.playMusic("ThemeIntro.ogg", "ThemeLoop.ogg");
                 for(Integer id : controllerIds){
                     if(SnesController.getButtonHeld(id, SnesController.START)){
-                        state.transition(20, 2,60);
+                        state.transition(80, 2,60);
                         while(controllerIds.size() > players.size()){
                             players.add(new Player(this, controllerIds.get(players.size()),players.size()));
                             players.get(players.size() -1).initMenu();
@@ -126,13 +124,17 @@ public class Game extends Engine {
                                 player.initGame();
                                 System.out.println(Modules.loadModuleSelection(player.moduleSelections).length);
                             }
-                            state.transition(0, 3, 0);
+                            map = Map.getMaps()[0];
+                            state.transition(0, 4, 0);
                             return;
                         }
                     }
                 }
                 break;
             case 3:
+                // map selection
+                break;
+            case 4:
                 if(checkKonami()){
                     Player.DRAW_HITBOXES = !Player.DRAW_HITBOXES;
                 }
@@ -158,10 +160,10 @@ public class Game extends Engine {
                     init();
                 }
                 break;
-            case 4:
+            case 5:
                 // pause game
                 break;
-            case 5:
+            case 6:
                 // aftermath
                 break;
         }
@@ -183,7 +185,7 @@ public class Game extends Engine {
             case 1:
                 // main menu
                 this.setHints(g);
-                MainMenu.render(g,this,width,height);
+                MainMenu.render(g,this,width,height, state.getTransit());
                 break;
 
             case 2:
@@ -221,13 +223,13 @@ public class Game extends Engine {
                 // module select
                 break;
 
-            case 3:
+            case 4:
                 
                 g.setColor(Color.white);
                 g.fillRect(0, 0, width, height);
                 
                 g.translate(width / 2, height / 2);
-                g.drawImage(map, -WINDOW_WIDTH/2 -50, -WINDOW_HEIGHT/2-50,null);
+                g.drawImage(map.background, -map.width/2, -map.height/2,null);
                 drawStats(g);
                 for (int i = 0; i < players.size(); i++) {
                     players.get(i).renderGame(g);
@@ -240,8 +242,10 @@ public class Game extends Engine {
                 for (Projectile projectile : projectiles) {
                     g.drawImage(projectile.image, (int)projectile.x,(int)projectile.y, null);
                 }
+                
+                g.drawImage(map.foreground, -map.width/2, -map.height/2,null);
                 break;
-            case 4:
+            case 5:
                 // aftermath
                 break;
         }

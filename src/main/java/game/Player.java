@@ -394,6 +394,9 @@ public class Player {
                     yVel *= 0.9;
                 }
             }
+            if(modules[i].loop && controller.held(i) && rVel <= maxRotSpeed){
+                modules[i].hold();
+            }
         }
         for(int i = 0; i < 4; i ++){
             modules[i].tick();

@@ -18,7 +18,7 @@ public class SimpleAnimation {
     private final ArrayList<Integer> state_increments;
     
     private int frame = 0;
-    private final boolean loop;
+    private boolean loop;
     private boolean finished;
     private int state;
     private boolean state_changed;
@@ -103,6 +103,20 @@ public class SimpleAnimation {
                 break;
         }
     }
+    public void AddVibrate(int amplitude, float period){
+        
+        for(int i = 1; i < period+1; i ++){
+            animation.add((float)Math.sin((i/period)*Math.PI)*(amplitude));
+        }
+        loop = true;
+    }
+    public void AddVibrate(int amplitude, float period, int frames){
+        
+        for(int i = 1; i < frames+1; i ++){
+            animation.add((float)Math.sin((i/period)*Math.PI)*(amplitude*(frames-i)/(float)frames));
+        }
+    }
+    
     public void addStateChange(){
         state_increments.add(animation.size()-1);
     }

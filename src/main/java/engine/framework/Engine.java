@@ -31,7 +31,6 @@ public abstract class Engine extends Canvas implements Runnable{
         window.start(this);
         this.createBufferStrategy(3);
         
-        
         new Thread() {
             public void run() {
                 load();
@@ -101,8 +100,6 @@ public abstract class Engine extends Canvas implements Runnable{
         
     }
     
-    int sync_timer = 0;
-    
     private void render() {
     	window.update();
         BufferStrategy bs = this.getBufferStrategy();
@@ -114,14 +111,7 @@ public abstract class Engine extends Canvas implements Runnable{
         render(graphics);
         graphics.dispose();
         bs.show();
-        if(sync_timer <= 0){
-            Toolkit.getDefaultToolkit().sync();
-            sync_timer = 4;
-        }
-        else{
-            sync_timer --;
-        }
-        
+        Toolkit.getDefaultToolkit().sync();
     }
     
     public void tick(){
