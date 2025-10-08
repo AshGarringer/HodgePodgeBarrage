@@ -109,7 +109,7 @@ public class Map {
                     hitboxString = hitbox.x+","+hitbox.y+","+hitbox.width+","+hitbox.height+"=";
                     break;
                 case 1:
-                    hitboxString = hitbox.x+","+hitbox.y+","+hitbox.radius+"=";
+                    hitboxString = hitbox.x+","+hitbox.y+","+hitbox.diameter+"=";
                     break;
                 case 2:
                     hitboxString = hitbox.x+","+hitbox.y+","+hitbox.width+","+hitbox.height+","+(int)hitbox.rotation+"=";
@@ -195,13 +195,15 @@ class MapHitbox {
     public int width;
     public int height;
     public double rotation;
-    public int radius;
+    public int diameter;
+    public int raduis;
     
     public MapHitbox (int type, int x, int y, int width, int height){
         this.type = type;
         this.x = x;
         this.y = y;
-        radius = width;
+        diameter = 0;
+        raduis = 0;
         this.width = width;
         this.height = height;
         this.rotation = 0;
@@ -210,16 +212,18 @@ class MapHitbox {
         this.type = type;
         this.x = x;
         this.y = y;
-        radius = width/2;
+        diameter = 0;
+        raduis = 0;
         this.width = width;
         this.height = height;
         this.rotation = rotation;
     }
-    public MapHitbox (int type, int x, int y, int radius){
+    public MapHitbox (int type, int x, int y, int diameter){
         this.type = type;
         this.x = x;
         this.y = y;
-        this.radius = radius;
+        this.diameter = diameter;
+        raduis = diameter/2;
     }
     
     public void render(Graphics2D g, boolean selected){
@@ -234,10 +238,10 @@ class MapHitbox {
                 break;
             case 1:
                 g.setColor(Color.red);
-                g.drawOval(x-radius/2, y-radius/2, radius,radius);
+                g.drawOval(x-diameter/2, y-diameter/2, diameter,diameter);
                 if(selected){
                 g.setColor(new Color(255,0,0,100));
-                    g.fillOval(x-radius/2, y-radius/2, radius,radius);
+                    g.fillOval(x-diameter/2, y-diameter/2, diameter,diameter);
                 }
                 break;
             case 2:
@@ -262,7 +266,7 @@ class MapHitbox {
                 p = Calcs.rotatePoint(p, x, y, -rotation);
                 return (new Rectangle(x-width/2,y-height/2,width,height)).contains(p);
             case 2:
-                return (p.x-x)*(p.x-x) + (p.y-y)*(p.y-y) < radius*radius; 
+                return (p.x-x)*(p.x-x) + (p.y-y)*(p.y-y) < diameter*diameter; 
         }
         return false;
     }
@@ -271,7 +275,7 @@ class MapHitbox {
         this.y += y;
         this.height += height;
         this.width += width;
-        if(type == 2)radius += width+height;
+        if(type == 2)diameter += width+height;
     }
     public void rotate(int rot){
         this.rotation = (360 + rotation +rot)%360;

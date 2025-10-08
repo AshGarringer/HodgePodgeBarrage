@@ -11,6 +11,7 @@ import java.awt.Color;
 import java.awt.Composite;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
@@ -75,6 +76,8 @@ public class Player {
     boolean alive = true;
     
     ArrayList<Player> intersecting;
+    ArrayList<Integer> intersectingMap;
+    ArrayList<Integer> intersectingZone;
     
     SnesController controller;
     
@@ -89,9 +92,11 @@ public class Player {
         xVel = 0;
         yVel = 0;
         rVel = 0;
-        damage = 80;
+        damage = 0;
         maxPause = 0;
         intersecting = new ArrayList<>();
+        intersectingMap = new ArrayList<>();
+        intersectingZone = new ArrayList<>();
         controller = new SnesController(controllerId);
         this.playerNum = playerNum;
         this.game = game;
@@ -429,22 +434,77 @@ public class Player {
     }
     
     public void tryToMove(float moveX, float moveY){
-        if(x + moveX >= Game.WINDOW_WIDTH/2 - 40){
-            if(xVel > 0)xVel = -xVel;
+        MapHitbox hitbox;
+        float translateX;
+        float translateY;
+        boolean collided = false;
+        for(int i = 0; i < game.map.hitboxes.size(); i ++){
+            hitbox = game.map.hitboxes.get(i);
+            translateX = x + moveX;
+            translateY = y + moveY;
+            switch(hitbox.type){
+                case 2:
+                    Point new_pos = Calcs.rotatePoint(translateX, translateY, hitbox.x, hitbox.y, -hitbox.rotation);
+                    translateX = new_pos.x;
+                    translateY = new_pos.y;
+                case 0:
+                    if(translateX > hitbox.x)translateX = Math.max(hitbox.x+1, translateX-hitbox.width/2);
+                    else translateX = Math.min(hitbox.x-1, translateX+hitbox.width/2);
+                    if(translateY > hitbox.y)translateY = Math.max(hitbox.y+1, translateY-hitbox.height/2);
+                    else translateY = Math.min(hitbox.y-1, translateY+hitbox.height/2);
+                    break;
+            }
+            
+            if(Math.pow(translateX-hitbox.x, 2) + Math.pow(translateY-hitbox.y, 2) < Math.pow(40+hitbox.diameter/2+1, 2)){
+                
+                if(!intersectingMap.contains(i)){
+                    collided = true;
+                    intersectingMap.add(i);
+                }
+                double angle = Math.atan2(translateY-hitbox.y, translateX-hitbox.x);
+                if(hitbox.type == 2)angle += Math.toRadians(hitbox.rotation);
+                collideWithMapHitbox(angle);
+            }
+            else{
+                if(intersectingMap.contains((Integer)i))
+                    intersectingMap.remove((Integer)i);
+            }
+            
         }
-        else if(x + moveX <= - Game.WINDOW_WIDTH/2 + 40){
-            if(xVel < 0)xVel = -xVel;
-        }
-        if(y + moveY >= Game.WINDOW_HEIGHT/2- 40){
-            if(yVel > 0)yVel = -yVel;
-        }
-        else if(y + moveY <= - Game.WINDOW_HEIGHT/2 + 40){
-            if(yVel < 0)yVel = -yVel;
-        }
-        else{
+        
+        if(!collided){
             x += moveX;
-            y += moveY; 
+            y += moveY;
         }
+        
+        for (int i = 0; i < game.map.zones.size(); i ++) {
+            
+            Rectangle zone = game.map.zones.get(i);
+            if(!zone.contains(new Point((int)x,(int)y)));
+            float oldXVel = xVel;
+            float oldYVel = yVel;
+            xVel *= -0.6f;
+            yVel *= -0.6f;
+            if(x < zone.x + 40)x = zone.x + 40;
+            else if(x > zone.x + zone.width - 40)x = zone.x + zone.width - 40;
+            else {xVel = oldXVel;}
+            if(y < zone.y + 40)y = zone.y + 40;
+            else if(y > zone.y + zone.height - 40)y = zone.y + zone.height - 40;
+            else {yVel = oldYVel;} 
+        }
+    }
+    
+    public void collideWithMapHitbox(double collisionAngle){
+        double velocity = Math.sqrt(xVel*xVel +yVel*yVel);
+        double angle = Math.atan2(yVel,xVel);
+        double parallel = Math.cos(angle - collisionAngle)*(velocity);
+        double perpendicular = Math.sin(angle - collisionAngle)*velocity;
+        double newAngle = Math.atan2(perpendicular, Math.abs(parallel*0.6f)) + collisionAngle;
+//        double newAngle = collisionAngle - (angle - collisionAngle)*2;
+        xVel = (float)(Math.cos(newAngle)*velocity);
+        yVel = (float)(Math.sin(newAngle)*velocity);
+        x += xVel;
+        y += yVel;
     }
 
     public void takeDamage(int damage, int type, double direction){
@@ -522,8 +582,10 @@ public class Player {
     
     public void renderGame(Graphics2D g){
         
+        
+        
         if(!alive){
-//            g.drawImage(Players.charredRemains, (int)x-60,(int)y-60,120,120,null);
+            g.drawImage(Players.charredRemains, (int)x-60,(int)y-60,120,120,null);
             return;
         }
         
