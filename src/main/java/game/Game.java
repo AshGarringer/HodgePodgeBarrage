@@ -400,7 +400,7 @@ public class Game extends Engine {
                 // First pass: check for attack hitbox collision
                 for (HitboxPoint hb : player.hitboxes) {
                     if (hitboxesCollide(hb, proj.getHitbox()) && isAttack(hb)) {
-                        attackCollision = true;
+//                        attackCollision = true;
                         break;
                     }
                 }

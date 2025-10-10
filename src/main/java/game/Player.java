@@ -722,7 +722,7 @@ public class Player {
             }
             if(deathLevel > 40)
                 g.drawImage(Players.sparks[sparkFrame], -60,-60, null);
-            g.translate(x,y);
+            g.translate(-x,-y);
         }
     }
 }
