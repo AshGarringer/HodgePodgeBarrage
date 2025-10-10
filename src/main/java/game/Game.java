@@ -88,6 +88,7 @@ public class Game extends Engine {
                 players.add(new Player(this, controllerIds.get(players.size()),players.size()));
                 players.get(players.size() -1).initMenu();
             }
+            winner = -1;
         }
         state.update();
         

@@ -706,7 +706,7 @@ public class Player {
     }
     public void renderForeground(Graphics2D g){
         
-        if(!alive){
+        if(!alive || explosionFrame > 0){
             return;
         }
         if(numButtons > 0 || deathVelocity > 0 || deathLevel > 0){

@@ -40,7 +40,7 @@ public class Modules {
         modules[3] = new Module("shield", safelyGetString(hitboxes,4), 5,4,1, safelyGetValue(damages,3),3);
         modules[4] = new Module("quickshield", safelyGetString(hitboxes,5), 12, safelyGetValue(damages,4),4);
         modules[5] = new Module("shooter", safelyGetString(hitboxes,6), 10, safelyGetValue(damages,5),5);
-        modules[6] = new Module("reflector", safelyGetString(hitboxes,7), 13, safelyGetValue(damages,6),6);
+        modules[6] = new Module("reflector", safelyGetString(hitboxes,7), 8,4,1, safelyGetValue(damages,6),6);
         
         return modules;
     }
