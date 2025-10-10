@@ -53,6 +53,7 @@ public class Player {
 
     int maxPause;
     int pause;
+    int iframes;
     
     int damageFrame = 0;
     
@@ -94,6 +95,7 @@ public class Player {
         rVel = 0;
         damage = 0;
         maxPause = 0;
+        iframes = 0;
         intersecting = new ArrayList<>();
         intersectingMap = new ArrayList<>();
         intersectingZone = new ArrayList<>();
@@ -112,7 +114,6 @@ public class Player {
     
     public final void initGame(){
         this.modules = Modules.loadModuleSelection(moduleSelections);
-        if(Players.centersTilted[center])rotation -= (float)Math.PI/4f;
         x = -200 + 400*(playerNum%2);
         y = -200 + 400*(playerNum/2);
     }
@@ -197,9 +198,6 @@ public class Player {
         
         g.translate(x, y);
 
-        if (Players.centersTilted[center])
-            g.rotate(-Math.PI / 4f);
-
         int hovered = playerHover;
         boolean previewDrawn = false;
         
@@ -215,9 +213,7 @@ public class Player {
             }
             g.rotate(Math.PI / 2);
         }
-        if (Players.centersTilted[center])
-            g.rotate(Math.PI / 4f);
-
+        
         g.drawImage(ModuleSelect.playerPreviews[center], -160, -160, null);
 
         g.translate(-x, -y);
@@ -289,6 +285,7 @@ public class Player {
                     else{
                         deathLevel = 0;
                         deathVelocity = 0;
+                        iframes = 90;
                     }
 //                    if(lastPressTime != 0){
 //                        System.out.println(System.currentTimeMillis() - lastPressTime);
@@ -326,6 +323,8 @@ public class Player {
             hitboxes[0] = new HitboxPoint((int)x,(int)y,50,0,100,null);
             return;
         }
+        
+        if(iframes > 0)iframes --;
         
         int xintent = 0;
         int yintent = 0;
@@ -509,8 +508,7 @@ public class Player {
 
     public void takeDamage(int damage, int type, double direction){
         
-        if(deathLevel > 0 || deathVelocity > 0){
-            addPause(damage);
+        if(deathLevel > 0 || deathVelocity > 0 || iframes > 0){
             return;
         }
         double knockback = Math.pow(damage,3/4f)*1.2f*Math.pow(this.damage+100, 1/4f)/Math.pow(100,1/4f);
@@ -582,15 +580,13 @@ public class Player {
     
     public void renderGame(Graphics2D g){
         
-        
-        
         if(!alive){
             g.drawImage(Players.charredRemains, (int)x-60,(int)y-60,120,120,null);
             return;
         }
         
         if(explosionFrame > 0){
-//            g.drawImage(Players.charredRemains, (int)x-60,(int)y-60,120,120,null);
+            g.drawImage(Players.charredRemains, (int)x-60,(int)y-60,120,120,null);
             g.drawImage(Players.explosion[explosionFrame], (int)x - 120,(int)y-120,null);
             
             
@@ -625,96 +621,70 @@ public class Player {
             y2 += Math.sin(angle)*dist;
         }
         
-        if(damage > 34){
-            int level = (damage-34)/33;
-            if(level > 3)level = 3;
-            if(damage >= 200 && deathVelocity <= 0 && deathLevel <= 0)level = 4;
+        int level = (int)((float)damage/33) - 1;
+        if(level > 3)level = 3;
+        if(damage >= 200 && deathVelocity <= 0 && deathLevel <= 0)level = 4;
+        // 1. Create an offscreen buffer (now 240x240)
+        BufferedImage playerBuffer = new BufferedImage(240, 240, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D gPlayer = playerBuffer.createGraphics();
 
-            // 1. Create an offscreen buffer (now 240x240)
-            BufferedImage playerBuffer = new BufferedImage(240, 240, BufferedImage.TYPE_INT_ARGB);
-            Graphics2D gPlayer = playerBuffer.createGraphics();
+        // 2. Draw player and modules to the buffer, centered
+        gPlayer.translate(120, 120); // Center the drawing in the larger buffer
+        gPlayer.rotate(rotation);
+        for (int i = 0; i < 4; i++) {
+            BufferedImage image = modules[i].getImage();
+            gPlayer.drawImage(image, -40, -120, null);
+            gPlayer.rotate(Math.PI / 2);
+        }
+        gPlayer.drawImage(Players.centers[center], -40, -40, null);
+        gPlayer.rotate(HIGHLIGHT_ANGLE - rotation);
+        gPlayer.drawImage(Players.highlight, -40, -40, 80, 80, null);
+        gPlayer.rotate(-HIGHLIGHT_ANGLE + rotation);
+        gPlayer.drawImage(Players.centerOverlays[center], -40, -40, null);
 
-            // 2. Draw player and modules to the buffer, centered
-            gPlayer.translate(120, 120); // Center the drawing in the larger buffer
-            gPlayer.rotate(rotation);
-            for (int i = 0; i < 4; i++) {
-                BufferedImage image = modules[i].getImage();
-                gPlayer.drawImage(image, -40, -120, null);
-                gPlayer.rotate(Math.PI / 2);
-            }
-            if(Players.centersTilted[center])gPlayer.rotate((float)Math.PI/4f);
-            gPlayer.drawImage(Players.centers[center], -40, -40, null);
-            if(Players.centersTilted[center])g.rotate(-(float)Math.PI/4f);
-            gPlayer.rotate(HIGHLIGHT_ANGLE - rotation);
-            gPlayer.drawImage(Players.highlight, -40, -40, 80, 80, null);
-            gPlayer.rotate(-HIGHLIGHT_ANGLE + rotation);
-            if(Players.centersTilted[center])g.rotate((float)Math.PI/4f);
-            gPlayer.drawImage(Players.centerOverlays[center], -40, -40, null);
-            if(Players.centersTilted[center])gPlayer.rotate(-(float)Math.PI/4f);
-            gPlayer.dispose();
-
+        if(level >= 0){
+            gPlayer.drawImage(Players.damaged[level][damageFrame], -50, -50, null);
             // 3. Draw the flash animation using SRC_ATOP
-            Graphics2D gFlash = playerBuffer.createGraphics();
-            gFlash.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, 0.7f));
+            gPlayer.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, 0.7f));
             g.translate(x2-x, y2-x);
-            gFlash.drawImage(Players.flashes[level][damageFrame], 40, 40, null); // Center the 160x160 flash in 240x240
-            g.translate(-x2+x, -y2+x);
-            gFlash.dispose();
-
-            g.drawImage(Players.shadow, (int)x2-50,(int)y2-50, null);
-            // 4. Draw the result to the main graphics context
-            g.drawImage(playerBuffer, (int)x2 - 120, (int)y2 - 120, null);
-
-            // 5. Draw the damage overlay as before (optional)
+            float alpha = (float)(Math.sin(System.currentTimeMillis() * 0.01*(level+1)) * 0.35 + 0.35); // Oscillates between 0 and 0.7
+            if(iframes > 0)
+                alpha = (float)(Math.sin(System.currentTimeMillis() * 0.05) * 0.15 + 0.3);
+            gPlayer.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, alpha));
+            gPlayer.setColor(new Color(255,0,0,Math.min(255,2*(damage-20))));
+            if(iframes > 0)
+                gPlayer.setColor(new Color(255,255,255));
             
-            g.translate(x2, y2);
-            g.rotate(rotation);
-            if(Players.centersTilted[center])g.rotate((float)Math.PI/4f);
-            g.drawImage(Players.damaged[level][damageFrame], -50, -50, null);
-            if(Players.centersTilted[center])g.rotate(-(float)Math.PI/4f);
-            g.rotate(-rotation);
-            g.translate(-x2, -y2);
+            gPlayer.fillRect(-120, -120, 240, 240); // Fill the entire buffer with red
+            g.translate(-x2+x, -y2+x);
+            
             damageFrame++;
             if (damageFrame >= 24) damageFrame = 0;
-        } else {
-            // Draw player and modules as before if not flashing
-            g.translate(x2, y2);
-            g.drawImage(Players.shadow, -50,-50, null);
-            g.rotate(rotation);
-            for (int i = 0; i < 4; i++) {
-                BufferedImage image = modules[i].getImage();
-                g.drawImage(image, -40, -120, null);
-                g.rotate(Math.PI / 2);
-            }
-            if(Players.centersTilted[center])g.rotate((float)Math.PI/4f);
-            g.drawImage(Players.centers[center], -40, -40, null);
-            if(Players.centersTilted[center])g.rotate(-(float)Math.PI/4f);
-            g.rotate(HIGHLIGHT_ANGLE - rotation);
-            g.drawImage(Players.highlight, -40, -40, 80, 80, null);
-            g.rotate(-HIGHLIGHT_ANGLE + rotation);
-            if(Players.centersTilted[center])g.rotate((float)Math.PI/4f);
-            g.drawImage(Players.centerOverlays[center], -40, -40, null);
-            if(Players.centersTilted[center])g.rotate(-(float)Math.PI/4f);
-            g.rotate(-rotation);
-            g.translate(-x2, -y2);
         }
-        if(numButtons > 0 || deathVelocity > 0 || deathLevel > 0){
-            x2 += (x-x2)*0.6f;
-            y2 += (y-y2)*0.6f;
-            
-            g.translate(x2,y2);
-            if(mash)
-                g.drawImage(Players.mash[mashButton][mashFrame], -20,-20, null);
-            else{
-                g.drawImage(Players.skillCheckBack, -35,-35, null);
-                g.drawImage(Players.skillCheck[mashButton][mashFrame], -35,-35, null);
-                if(numButtons > 1)
-                    g.drawImage(Players.skillCheckNext[nextMashButton], -35,-35, null);
-            }
-            if(deathLevel > 40)
-                g.drawImage(Players.sparks[sparkFrame], -60,-60, null);
-            g.translate(-x2,-y2);
-        }
+        gPlayer.dispose();
+
+        g.drawImage(Players.shadow, (int)x2-50,(int)y2-50, null);
+        // 4. Draw the result to the main graphics context
+        g.drawImage(playerBuffer, (int)x2 - 120, (int)y2 - 120, null);
+
+        // 5. Draw the damage overlay as before (optional)
+//        if(numButtons > 0 || deathVelocity > 0 || deathLevel > 0){
+//            x2 += (x-x2)*0.6f;
+//            y2 += (y-y2)*0.6f;
+//            
+//            g.translate(x2,y2);
+//            if(mash)
+//                g.drawImage(Players.mash[mashButton][mashFrame], -20,-20, null);
+//            else{
+//                g.drawImage(Players.skillCheckBack, -35,-35, null);
+//                g.drawImage(Players.skillCheck[mashButton][mashFrame], -35,-35, null);
+//                if(numButtons > 1)
+//                    g.drawImage(Players.skillCheckNext[nextMashButton], -35,-35, null);
+//            }
+//            if(deathLevel > 40)
+//                g.drawImage(Players.sparks[sparkFrame], -60,-60, null);
+//            g.translate(-x2,-y2);
+//        }
             
         if(DRAW_HITBOXES){
             int lastType = -1;
@@ -732,6 +702,27 @@ public class Player {
                 }
                 g.fillOval(hp.x-hp.radius,hp.y-hp.radius,hp.radius*2,hp.radius*2);
             }
+        }
+    }
+    public void renderForeground(Graphics2D g){
+        
+        if(!alive){
+            return;
+        }
+        if(numButtons > 0 || deathVelocity > 0 || deathLevel > 0){
+            
+            g.translate(x,y);
+            if(mash)
+                g.drawImage(Players.mash[mashButton][mashFrame], -20,-20, null);
+            else{
+                g.drawImage(Players.skillCheckBack, -35,-35, null);
+                g.drawImage(Players.skillCheck[mashButton][mashFrame], -35,-35, null);
+                if(numButtons > 1)
+                    g.drawImage(Players.skillCheckNext[nextMashButton], -35,-35, null);
+            }
+            if(deathLevel > 40)
+                g.drawImage(Players.sparks[sparkFrame], -60,-60, null);
+            g.translate(x,y);
         }
     }
 }

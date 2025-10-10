@@ -183,6 +183,39 @@ public class Map {
         return maps;
     }
     
+    public double intersects(float x, float y, int radius){
+        
+        MapHitbox hitbox;
+        float translateX;
+        float translateY;
+        for(int i = 0; i < hitboxes.size(); i ++){
+            hitbox = hitboxes.get(i);
+            translateX = x;
+            translateY = y;
+            switch(hitbox.type){
+                case 2:
+                    Point new_pos = Calcs.rotatePoint(translateX, translateY, hitbox.x, hitbox.y, -hitbox.rotation);
+                    translateX = new_pos.x;
+                    translateY = new_pos.y;
+                case 0:
+                    if(translateX > hitbox.x)translateX = Math.max(hitbox.x+1, translateX-hitbox.width/2);
+                    else translateX = Math.min(hitbox.x-1, translateX+hitbox.width/2);
+                    if(translateY > hitbox.y)translateY = Math.max(hitbox.y+1, translateY-hitbox.height/2);
+                    else translateY = Math.min(hitbox.y-1, translateY+hitbox.height/2);
+                    break;
+            }
+            
+            if(Math.pow(translateX-hitbox.x, 2) + Math.pow(translateY-hitbox.y, 2) < Math.pow(radius+hitbox.diameter/2+1, 2)){
+                
+                double angle = Math.atan2(translateY-hitbox.y, translateX-hitbox.x);
+                if(hitbox.type == 2)angle += Math.toRadians(hitbox.rotation);
+                return angle;
+            }
+            
+        }
+        return 0;
+    }
+    
 }
 class MapHitbox {
     

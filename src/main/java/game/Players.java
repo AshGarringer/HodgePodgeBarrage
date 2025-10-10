@@ -30,7 +30,6 @@ public class Players {
     public static BufferedImage[] centers;
     public static BufferedImage[] centerOverlays;
     public static BufferedImage highlight;
-    public static Boolean[] centersTilted;
     public static BufferedImage shadow;
     
     public static void loadImages(){
@@ -39,9 +38,6 @@ public class Players {
         
         
         String[] centerNames = new String[]{"smiley","grin","dismay","stress","cyclops","drool"};
-        centersTilted = new Boolean[]{
-                false, false, true, true, false, true
-                };
         centers = new BufferedImage[centerNames.length];
         centerOverlays = new BufferedImage[centerNames.length];
         for(int i = 0; i < centerNames.length; i ++){

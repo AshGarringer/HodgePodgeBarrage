@@ -33,6 +33,7 @@ public class Game extends Engine {
     Text text2;
     Text text3;
     
+    boolean restart = false;
     int winner;
     
     Random random;
@@ -73,12 +74,22 @@ public class Game extends Engine {
 
     @Override
     public void tick() {
-        state.update();
+        
         ArrayList<Integer> controllerIds = new ArrayList<>();
         if(loaded){
             audioManager.update();
             controllerIds = SnesController.updateControllers();
         }
+        if(restart){
+            players = new ArrayList<>();
+            state.transition(0, 2,60);
+            restart = false;
+            while(controllerIds.size() > players.size()){
+                players.add(new Player(this, controllerIds.get(players.size()),players.size()));
+                players.get(players.size() -1).initMenu();
+            }
+        }
+        state.update();
         
         switch (state.state()) {
             case 0:
@@ -139,7 +150,6 @@ public class Game extends Engine {
                     Player.DRAW_HITBOXES = !Player.DRAW_HITBOXES;
                 }
                 int playersRemaining = 0;
-                boolean restart = false;
                 for (int i = 0; i < players.size(); i++) {
                     if(i == winner && players.get(i).controller.pressed(SnesController.START))restart = true;
                     players.get(i).tickGame();
@@ -152,13 +162,12 @@ public class Game extends Engine {
                 }
                 int tbr = -1;
                 for(int i = 0; i < projectiles.size(); i ++){
-                    projectiles.get(i).tick();
+                    Projectile proj = projectiles.get(i);
+                    proj.tick();
+                    if(map.intersects(proj.x, proj.y, 3) != 0)tbr = i;
                     if(projectiles.get(i).timer <= 0)tbr = i;
                 }
                 if(tbr >= 0)projectiles.remove(tbr);
-                if(restart){
-                    init();
-                }
                 break;
             case 5:
                 // pause game
@@ -230,20 +239,24 @@ public class Game extends Engine {
                 
                 g.translate(width / 2, height / 2);
                 g.drawImage(map.background, -map.width/2, -map.height/2,null);
-                drawStats(g);
                 for (int i = 0; i < players.size(); i++) {
                     players.get(i).renderGame(g);
                 }
                 checkCollisions();
-                if(winner >= 0){
-                    text2.drawString(0, 0, "PLAYER "+(winner+1)+" WINS!", g);
-                }
                 
                 for (Projectile projectile : projectiles) {
                     g.drawImage(projectile.image, (int)projectile.x,(int)projectile.y, null);
                 }
                 
                 g.drawImage(map.foreground, -map.width/2, -map.height/2,null);
+                
+                drawStats(g);
+                if(winner >= 0){
+                    text2.drawString(0, 0, "PLAYER "+(winner+1)+" WINS!", g);
+                }
+                for (int i = 0; i < players.size(); i++) {
+                    players.get(i).renderForeground(g);
+                }
                 break;
             case 5:
                 // aftermath
