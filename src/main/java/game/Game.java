@@ -307,7 +307,7 @@ public class Game extends Engine {
                 }
             }
             else{
-                player.takeDamage((int)(proj.damage * hb.intensity / 100), 6,
+                player.takeDamage((int)(proj.damage * hb.intensity / 100), 1,
                         Math.atan2(player.y - proj.y,  player.x - proj.x));
             }
             if(proj.type != 6){
