@@ -246,7 +246,7 @@ public class Game extends Engine {
                 checkCollisions();
                 
                 for (Projectile projectile : projectiles) {
-                    g.drawImage(projectile.image, (int)projectile.x,(int)projectile.y, null);
+                    projectile.render(g);
                 }
                 
                 g.drawImage(map.foreground, -map.width/2, -map.height/2,null);
@@ -295,11 +295,32 @@ public class Game extends Engine {
     private void handleProjectileCollision(Player player, HitboxPoint hb, Projectile proj) {
         // Hurtbox (0) takes damage, Reflector (4) reflects
         if (hb.type == 0) {
-            player.takeDamage((int)(proj.damage * hb.intensity / 100), 6, proj.rotation);
-            proj.timer = -1;
-        } else if (hb.type == 4) {
-            proj.timer = -1;
-            projectiles.add(new Projectile(proj.x, proj.y, -proj.xVel, -proj.yVel, proj.image, proj.rotation + Math.PI, player.playerNum));
+            if(proj.type == 6 && proj.damage == 0){
+                if(proj.xVel + proj.yVel > 0.5){
+                    
+                    float holderx = proj.xVel;
+                    float holdery = proj.yVel;
+                    proj.xVel = player.xVel;
+                    proj.yVel = player.yVel;
+                    player.xVel = holderx;
+                    player.yVel = holdery;
+                }
+            }
+            else{
+                player.takeDamage((int)(proj.damage * hb.intensity / 100), 6,
+                        Math.atan2(player.y - proj.y,  player.x - proj.x));
+            }
+            if(proj.type != 6){
+                proj.timer = -1;
+            }
+            else{
+                if(proj.timer < 36){
+                    proj.damage = 0;
+                    proj.radius = 0;
+                }
+            }
+        } else if (hb.type == 4 || hb.type == 6) {
+            projectiles.add(proj.reflect(player.playerNum));
         }
     }
 
@@ -309,12 +330,24 @@ public class Game extends Engine {
         double atkDir = attacker.rotation + atkModule * Math.PI / 2 - Math.PI / 2;
         double defDir = defender.rotation + defModule * Math.PI / 2 - Math.PI / 2;
 
-        if (def.type == 2) { // Shield
-            attacker.takeDamage((int)(atk.intensity * atk.parent.damage / 100), def.type, defDir);
-        } else {
-            int dmg = (int)(atk.intensity * def.intensity * atk.parent.damage / 10000);
-            defender.takeDamage(dmg, atk.type, atkDir);
-            attacker.addPause(dmg);
+        switch (def.type) {
+            case 2:
+            case 6:
+                attacker.takeDamage((int)(atk.intensity * atk.parent.damage / 100), def.type, defDir);
+                break;
+            case 5:
+                {
+                    int dmg = (int)(atk.intensity * def.intensity * def.parent.damage / 10000);
+                    attacker.takeDamage(dmg, def.type, defDir);
+                    break;
+                }
+            default:
+                {
+                    int dmg = (int)(atk.intensity * def.intensity * atk.parent.damage / 10000);
+                    defender.takeDamage(dmg, atk.type, atkDir);
+                    attacker.addPause(dmg);
+                    break;
+                }
         }
     }
 
@@ -338,14 +371,14 @@ public class Game extends Engine {
                         if (!hitboxesCollide(hb1, hb2)) continue;
 
                         // Attack/Defend logic
-                        if ((hb1.type == 1 || hb1.type == 10) && (hb2.type == 0 || hb2.type == 2)) {
-                            if (p1Attack == null || hb1.intensity > p1Attack.intensity || hb2.type == 2) {
+                        if (isAttacking(hb1) && isDefending(hb2)) {
+                            if (p1Attack == null || hb1.intensity > p1Attack.intensity || hb2.type == 2 || hb2.type == 6) {
                                 p1Attack = hb1;
                                 p2Defend = hb2;
                             }
                         }
-                        if ((hb2.type == 1 || hb2.type == 10) && (hb1.type == 0 || hb1.type == 2)) {
-                            if (p2Attack == null || hb2.intensity > p2Attack.intensity || hb1.type == 2) {
+                        if (isAttacking(hb2) && isDefending(hb1)) {
+                            if (p2Attack == null || hb2.intensity > p2Attack.intensity || hb1.type == 2 || hb1.type == 6) {
                                 p2Attack = hb2;
                                 p1Defend = hb1;
                             }
@@ -392,7 +425,7 @@ public class Game extends Engine {
         for (Projectile proj : new ArrayList<>(projectiles)) {
             if (proj.timer <= 0) continue;
             for (int i = 0; i < players.size(); i++) {
-                if (i == proj.parent) continue; // Immune to own projectiles
+                if (i == proj.parent && proj.type != 6) continue; // Immune to own projectiles
                 Player player = players.get(i);
                 if (player.hitboxes == null || !player.alive) continue;
 
@@ -401,7 +434,7 @@ public class Game extends Engine {
                 // First pass: check for attack hitbox collision
                 for (HitboxPoint hb : player.hitboxes) {
                     if (hitboxesCollide(hb, proj.getHitbox()) && isAttack(hb)) {
-//                        attackCollision = true;
+                        attackCollision = true;
                         break;
                     }
                 }
@@ -422,6 +455,12 @@ public class Game extends Engine {
                 }
             }
         }
+    }
+    private boolean isAttacking(HitboxPoint hb1){
+        return hb1.type == 1 || hb1.type == 10 || hb1.type == 5;
+    }
+    private boolean isDefending(HitboxPoint hb1){
+        return hb1.type == 0 || hb1.type == 2 || hb1.type == 5 || hb1.type == 6;
     }
     
     public boolean handleError(Exception e){

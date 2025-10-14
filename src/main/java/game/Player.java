@@ -127,7 +127,7 @@ public class Player {
             center = (center -1 + Players.centers.length)%Players.centers.length;
         }
         if(controller.pressed(SnesController.RTRIGGER)){
-            center = (center +1 + Players.centers.length)%Players.centers.length;;
+            center = (center +1 + Players.centers.length)%Players.centers.length;
         }
 
         int xintent = 0;
@@ -404,6 +404,21 @@ public class Player {
         }
         for(int i = 0; i < 4; i ++){
             modules[i].tick();
+            
+            if(modules[i].type == 11 ){
+                Module mod = modules[i];
+                if(mod.frameTimer == 1){
+                    if(mod.frame == 6){
+                        this.xVel += (float)(Math.cos(Math.PI/2*i + rotation + Math.PI/2)*6);
+                        this.yVel += (float)(Math.sin(Math.PI/2*i + rotation + Math.PI/2)*6);
+                    }
+                    else if(mod.frame >= 6 && mod.frame <= 14){
+                        
+                        this.xVel += (float)(Math.cos(Math.PI/2*i + rotation + Math.PI/2)*2);
+                        this.yVel += (float)(Math.sin(Math.PI/2*i + rotation + Math.PI/2)*2);
+                    }
+                }
+            }
         }
         
         hitboxes = new HitboxPoint[modules[0].getHitbox().length + modules[1].getHitbox().length+
@@ -422,8 +437,9 @@ public class Player {
                     float velocityX = (float)Math.cos(projectileRotation)*7;
                     float velocityY = (float)Math.sin(projectileRotation)*7;
                     
-                    game.projectiles.add(new Projectile(rotatedPoint.x,rotatedPoint.y,velocityX + xVel,
-                            velocityY + yVel,modules[i].projectile,projectileRotation, playerNum));
+                    game.projectiles.add(new Projectile(rotatedPoint.x,rotatedPoint.y,velocityX,
+                            velocityY,modules[i].projectile,projectileRotation, playerNum, modules[i].type));
+                    
                 }
                     hitboxes[hitboxNum] = new HitboxPoint(rotatedPoint.x,rotatedPoint.y,hitboxFrame[j].radius,
                             hitboxFrame[j].type,hitboxFrame[j].intensity,hitboxFrame[j].parent);
@@ -525,7 +541,8 @@ public class Player {
         jitterX = (float)Math.abs(Math.cos(direction)*knockback);
         jitterY = (float)Math.abs(Math.sin(direction)*knockback);
         
-        if(type != 2){
+        System.out.println(type);
+        if(type != 2 && type != 6){
             if(this.damage > 60 && mash){
                 deathVelocity = (float)(Math.pow((this.damage-60)*Math.pow(damage,1/2f),1/2f)/12);
                 System.out.println(deathVelocity);

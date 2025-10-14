@@ -18,14 +18,13 @@ public class Modules {
     
     public static Module[] modules;
     
-    
-    public static final int NUM_MODULES = 7;
+    public static final int NUM_MODULES = 12;
     
     public static Module[] getModules(){
         
         if(modules != null)return modules;
         
-        modules = new Module[7];
+        modules = new Module[12];
         
         String s = FileLoader.separator();
         ArrayList<String> hitboxes = FileLoader.readLocalFile(s+"hitboxes");
@@ -37,10 +36,15 @@ public class Modules {
         modules[0] = new Module("spike", safelyGetString(hitboxes,1), 9, safelyGetValue(damages,0),0);
         modules[1] = new Module("spear", safelyGetString(hitboxes,2), 23, safelyGetValue(damages,1),1);
         modules[2] = new Module("saw", safelyGetString(hitboxes,3), 8, 2, 4, safelyGetValue(damages,2),2);
-        modules[3] = new Module("shield", safelyGetString(hitboxes,4), 5,4,1, safelyGetValue(damages,3),3);
-        modules[4] = new Module("quickshield", safelyGetString(hitboxes,5), 12, safelyGetValue(damages,4),4);
-        modules[5] = new Module("shooter", safelyGetString(hitboxes,6), 10, safelyGetValue(damages,5),5);
-        modules[6] = new Module("reflector", safelyGetString(hitboxes,7), 8,4,1, safelyGetValue(damages,6),6);
+        modules[3] = new Module("boxingGlove", safelyGetString(hitboxes,4), 30, 25, 1, safelyGetValue(damages,3),3);
+        modules[4] = new Module("lightShooter", safelyGetString(hitboxes,5), 6, safelyGetValue(damages,4),4);
+        modules[5] = new Module("shooter", safelyGetString(hitboxes,6), 13, safelyGetValue(damages,5),5);
+        modules[6] = new Module("bombShooter", safelyGetString(hitboxes,7), 27, safelyGetValue(damages,6),6);
+        modules[7] = new Module("electrifier", safelyGetString(hitboxes,8), 31, safelyGetValue(damages,7),7);
+        modules[8] = new Module("shield", safelyGetString(hitboxes,9), 6,4,1, safelyGetValue(damages,8),8);
+        modules[9] = new Module("reflector", safelyGetString(hitboxes,10), 8,4,1, safelyGetValue(damages,9),9);
+        modules[10] = new Module("reflectorShield", safelyGetString(hitboxes,11), 12, safelyGetValue(damages,10),10);
+        modules[11] = new Module("rocketBooster", safelyGetString(hitboxes,12), 41, safelyGetValue(damages,11),11);
         
         return modules;
     }

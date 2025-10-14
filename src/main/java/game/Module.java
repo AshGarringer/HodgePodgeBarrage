@@ -30,15 +30,18 @@ public class Module {
     int loop_length = 0;
     boolean held = false;
     
-    BufferedImage projectile;
+    BufferedImage[] projectile;
     
     private boolean buffered = false;
+    
+    int type;
     
     public Module(String path, String hitbox_string, int length, int damage, int type){
         this(path,hitbox_string,length,0,0,damage,type);
     }
     public Module(String path, String hitbox_string, int length, int loop_start, int loop_length, int damage, int type){
         
+        this.type = type;
         this.length = length;
         
         if(loop_length != 0){
@@ -55,8 +58,21 @@ public class Module {
          
         hitbox = new Hitbox(hitbox_string, length, damage, this);
         
-        if(type == 5){
-            projectile = Textures.loadImage("/textures/modules/"+path+"/projectile.png");
+        switch(type){
+            case 4:
+                projectile = new BufferedImage[1];
+                projectile[0] = Textures.loadImage("/textures/modules/"+path+"/projectile.png");
+                break;
+            case 5:
+                projectile = new BufferedImage[1];
+                projectile[0] = Textures.loadImage("/textures/modules/"+path+"/projectile.png");
+                break;
+            case 6:
+                projectile = new BufferedImage[40];
+                for(int i = 0; i < 40; i ++){
+                    projectile[i] = Textures.loadImage("/textures/modules/"+path+"/projectile/" + Calcs.fillInt(i) + ".png");
+                }
+                break;
         }
         
         for(int i = 0; i < hitbox.animation.length && startup == -1; i ++){
@@ -68,6 +84,7 @@ public class Module {
                 }
             }
         }
+        if(type == 3)startup = 0;
     }
     
     public void tick(){
@@ -113,7 +130,7 @@ public class Module {
         return hitbox.animation[frame];
     }
     
-    private Module(BufferedImage[] animation, int loop_start, int loop_length, Hitbox hitbox, int index, int startup, BufferedImage projectile){
+    private Module(BufferedImage[] animation, int loop_start, int loop_length, Hitbox hitbox, int index, int startup, BufferedImage[] projectile, int type){
          this.animation = animation;
          this.hitbox = hitbox;
          this.loop_start = loop_start;
@@ -122,9 +139,10 @@ public class Module {
          this.hitbox.parent = this;
          this.startup = startup;
          this.projectile = projectile;
+         this.type = type;
     }
     
     public Module duplicate(int index){
-        return new Module(animation,loop_start,loop_length,hitbox,index,startup,projectile);
+        return new Module(animation,loop_start,loop_length,hitbox,index,startup,projectile,type);
     }
 }

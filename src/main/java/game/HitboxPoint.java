@@ -20,6 +20,14 @@ public class HitboxPoint {
     public Hitbox parent;
     public Projectile projectileParent;
     
+    // 0: Damageable hitbox
+    // 1: Attacking hitbox
+    // 2: Shield hitbox
+    // 3: Projectile spawnpoint
+    // 4: Reflector hitbox
+    // 5: Electric counter hitbox
+    // 6: Shield AND reflector hitbox
+    
     public HitboxPoint(String string, Hitbox parent){
         String[] arr = string.split(",");
         try{
