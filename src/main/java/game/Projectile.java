@@ -86,7 +86,7 @@ public class Projectile {
     public Projectile reflect(int newParent){
         if(type != 6)timer = 120;
         xVel *= -1;
-        xVel *= -1;
+        yVel *= -1;
         this.parent = newParent;
         return this;
     }

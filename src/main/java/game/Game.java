@@ -320,7 +320,7 @@ public class Game extends Engine {
                 }
             }
         } else if (hb.type == 4 || hb.type == 6) {
-            projectiles.add(proj.reflect(player.playerNum));
+            proj.reflect(player.playerNum);
         }
     }
 
