@@ -46,15 +46,15 @@ public class HitboxEditor extends javax.swing.JFrame {
         }
         if((int)frame.getValue() != frameSelected){
             frameSelected = (int)frame.getValue();
-            int val = Math.max(Math.min(modules[moduleSelected].hitbox.animation[frameSelected].length,hitboxSelected+1),1);
-            int max = Math.max(modules[moduleSelected].hitbox.animation[frameSelected].length,1);
+            int val = Math.max(Math.min(modules[moduleSelected].hitbox.hurtboxes[frameSelected].length,hitboxSelected+1),1);
+            int max = Math.max(modules[moduleSelected].hitbox.hurtboxes[frameSelected].length,1);
             hitbox.setModel(new SpinnerNumberModel(val,1,max, 1));
             hitboxSelected = -1;
         }
         if((int)hitbox.getValue() -1 != hitboxSelected){
             hitboxSelected = (int)hitbox.getValue() -1;
-            if (modules[moduleSelected].hitbox.animation[frameSelected].length == 0
-                    || modules[moduleSelected].hitbox.animation[frameSelected][hitboxSelected].radius == 0) {
+            if (modules[moduleSelected].hitbox.hurtboxes[frameSelected].length == 0
+                    || modules[moduleSelected].hitbox.hurtboxes[frameSelected][hitboxSelected].radius == 0) {
                 SpinnerNumberModel m = new SpinnerNumberModel(0, 0, 0, 1);
                 size.setModel(m);
                 size.setEnabled(false);
@@ -67,7 +67,7 @@ public class HitboxEditor extends javax.swing.JFrame {
                 intensity.setModel(m);
                 intensity.setEnabled(false);
             } else {
-                HitboxPoint hitboxPoint = modules[moduleSelected].hitbox.animation[frameSelected][hitboxSelected];
+                HitboxPoint hitboxPoint = modules[moduleSelected].hitbox.hurtboxes[frameSelected][hitboxSelected];
                 size.setModel(new SpinnerNumberModel(hitboxPoint.radius,1, 50, 1));
                 x.setModel(new SpinnerNumberModel(hitboxPoint.x,0, 80, 1));
                 y.setModel(new SpinnerNumberModel(100-hitboxPoint.y,0, 100, 1));
@@ -363,48 +363,48 @@ public class HitboxEditor extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void sizeStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_sizeStateChanged
-        modules[moduleSelected].hitbox.animation[frameSelected][hitboxSelected].radius = (int)size.getValue();
+        modules[moduleSelected].hitbox.hurtboxes[frameSelected][hitboxSelected].radius = (int)size.getValue();
         repaintPanel();
     }//GEN-LAST:event_sizeStateChanged
 
     private void xStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_xStateChanged
-        modules[moduleSelected].hitbox.animation[frameSelected][hitboxSelected].x = (int)x.getValue();
+        modules[moduleSelected].hitbox.hurtboxes[frameSelected][hitboxSelected].x = (int)x.getValue();
         repaintPanel();
     }//GEN-LAST:event_xStateChanged
 
     private void yStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_yStateChanged
-        modules[moduleSelected].hitbox.animation[frameSelected][hitboxSelected].y = 100-(int)y.getValue();
+        modules[moduleSelected].hitbox.hurtboxes[frameSelected][hitboxSelected].y = 100-(int)y.getValue();
         repaintPanel();
     }//GEN-LAST:event_yStateChanged
 
     private void typeStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_typeStateChanged
-        modules[moduleSelected].hitbox.animation[frameSelected][hitboxSelected].type = (int)type.getValue();
+        modules[moduleSelected].hitbox.hurtboxes[frameSelected][hitboxSelected].type = (int)type.getValue();
         repaintPanel();
     }//GEN-LAST:event_typeStateChanged
 
     private void intensityStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_intensityStateChanged
-        modules[moduleSelected].hitbox.animation[frameSelected][hitboxSelected].intensity = (int)intensity.getValue();
+        modules[moduleSelected].hitbox.hurtboxes[frameSelected][hitboxSelected].intensity = (int)intensity.getValue();
         repaintPanel();
     }//GEN-LAST:event_intensityStateChanged
 
     private void cloneActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cloneActionPerformed
-        if((modules[moduleSelected].hitbox.animation[frameSelected].length == 0 || 
-                modules[moduleSelected].hitbox.animation[frameSelected][hitboxSelected].radius == 0) && frameSelected >= 1){
-            HitboxPoint[] original = modules[moduleSelected].hitbox.animation[frameSelected-1];
+        if((modules[moduleSelected].hitbox.hurtboxes[frameSelected].length == 0 || 
+                modules[moduleSelected].hitbox.hurtboxes[frameSelected][hitboxSelected].radius == 0) && frameSelected >= 1){
+            HitboxPoint[] original = modules[moduleSelected].hitbox.hurtboxes[frameSelected-1];
             HitboxPoint[] duplicate = new HitboxPoint[original.length];
             for(int i = 0; i < original.length; i ++){
                 duplicate[i] = new HitboxPoint(original[i].x,original[i].y,original[i].radius,original[i].type,
                         original[i].intensity,original[i].parent);
             }
-            modules[moduleSelected].hitbox.animation[frameSelected] = duplicate;
+            modules[moduleSelected].hitbox.hurtboxes[frameSelected] = duplicate;
             frameSelected = -1;
         }
         AdjustValues();
     }//GEN-LAST:event_cloneActionPerformed
 
     private void deleteHitboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteHitboxActionPerformed
-        if(modules[moduleSelected].hitbox.animation[frameSelected].length > 1){
-            HitboxPoint[] currentHitboxes = modules[moduleSelected].hitbox.animation[frameSelected];
+        if(modules[moduleSelected].hitbox.hurtboxes[frameSelected].length > 1){
+            HitboxPoint[] currentHitboxes = modules[moduleSelected].hitbox.hurtboxes[frameSelected];
 
             // Create a new array with one additional slot for the new hitbox
             HitboxPoint[] newHitboxes = new HitboxPoint[currentHitboxes.length - 1];
@@ -417,13 +417,13 @@ public class HitboxEditor extends javax.swing.JFrame {
                 i2 ++;
             }
 
-            modules[moduleSelected].hitbox.animation[frameSelected] = newHitboxes;
+            modules[moduleSelected].hitbox.hurtboxes[frameSelected] = newHitboxes;
 
             frameSelected = -1;
             hitboxSelected --;
         }
         else{
-            modules[moduleSelected].hitbox.animation[frameSelected][hitboxSelected] = new HitboxPoint();
+            modules[moduleSelected].hitbox.hurtboxes[frameSelected][hitboxSelected] = new HitboxPoint();
             hitboxSelected = -1;
         }
         AdjustValues();
@@ -435,11 +435,11 @@ public class HitboxEditor extends javax.swing.JFrame {
 
     private void addHitboxActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_addHitboxActionPerformed
         
-        HitboxPoint[] currentHitboxes = modules[moduleSelected].hitbox.animation[frameSelected];
+        HitboxPoint[] currentHitboxes = modules[moduleSelected].hitbox.hurtboxes[frameSelected];
         
         if(currentHitboxes.length == 1 && currentHitboxes[0].radius == 0){
             
-            modules[moduleSelected].hitbox.animation[frameSelected][0] = new HitboxPoint(40, 50, 10, 1, 100,null);
+            modules[moduleSelected].hitbox.hurtboxes[frameSelected][0] = new HitboxPoint(40, 50, 10, 1, 100,null);
             
             hitboxSelected = -1;
             AdjustValues();
@@ -454,7 +454,7 @@ public class HitboxEditor extends javax.swing.JFrame {
         newHitboxes[newHitboxes.length - 1] = new HitboxPoint(40, 50, 10, 1, 100,null); // Add the new hitbox
 
         // Update the appropriate hitbox array
-        modules[moduleSelected].hitbox.animation[frameSelected] = newHitboxes;
+        modules[moduleSelected].hitbox.hurtboxes[frameSelected] = newHitboxes;
         
         frameSelected = -1;
         hitboxSelected = newHitboxes.length - 1;
@@ -483,7 +483,7 @@ public class HitboxEditor extends javax.swing.JFrame {
     public void repaintPanel(){
         
         Image currentImage = modules[moduleSelected].animation[frameSelected];
-        HitboxPoint[] hitboxframe = modules[moduleSelected].hitbox.animation[frameSelected];
+        HitboxPoint[] hitboxframe = modules[moduleSelected].hitbox.hurtboxes[frameSelected];
 
         jPanel2.setImageAndHitboxes(currentImage,hitboxframe,hitboxSelected);
     }

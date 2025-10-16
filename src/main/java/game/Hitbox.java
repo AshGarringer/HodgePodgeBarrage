@@ -12,29 +12,48 @@ import java.awt.Point;
  */
 public class Hitbox {
     
-    public HitboxPoint[][] animation;
+    public HitboxPoint[][] hurtboxes;
+    public HitboxPoint[][] hitboxes;
     public Module parent;
     public int damage;
     
-    public Hitbox(String hitboxes, int length, int damage, Module parent){
+    public Hitbox(String hitboxString, int length, int damage, Module parent){
         
         this.damage = damage;
         this.parent = parent;
         
-        String[] frames = hitboxes.split(" ");
+        String[] frames = hitboxString.split(" ");
         
-        animation = new HitboxPoint[length][];
+        hurtboxes = new HitboxPoint[length][];
+        hitboxes = new HitboxPoint[length][];
         
         for(int i = 0; i < length; i ++){
             if(frames.length > i){
                 String[] individual_hitboxes = frames[i].split("-");
-                animation[i] = new HitboxPoint[individual_hitboxes.length];
+                int numHurtboxes = 0;
+                int numHitboxes = 0;
+               
                 for(int j = 0; j < individual_hitboxes.length; j ++){
-                    animation[i][j] = new HitboxPoint(individual_hitboxes[j], this);
+                    if(HitboxPoint.isHurtbox(individual_hitboxes[j]))numHurtboxes ++;
+                    else numHitboxes ++;
+                }
+                
+                hurtboxes[i] = new HitboxPoint[numHurtboxes];
+                hitboxes[i] = new HitboxPoint[numHitboxes];
+                
+                for(int j = 0; j < individual_hitboxes.length; j ++){
+                    if(HitboxPoint.isHurtbox(individual_hitboxes[j])){
+                        hurtboxes[i][hurtboxes[i].length - numHurtboxes] = new HitboxPoint(individual_hitboxes[j], this);
+                        numHurtboxes --;
+                    }
+                    else{
+                        hitboxes[i][hitboxes[i].length - numHitboxes] = new HitboxPoint(individual_hitboxes[j], this);
+                        numHitboxes --;
+                    }
                 }
             }else{
-                animation[i] = new HitboxPoint[1];
-                animation[i][0] = new HitboxPoint();
+                hurtboxes[i] = new HitboxPoint[0];
+                hitboxes[i] = new HitboxPoint[0];
             }
         }
     }
@@ -42,7 +61,7 @@ public class Hitbox {
     public Hitbox(int damage, HitboxPoint point){
         
         this.damage = damage;
-        animation = new HitboxPoint[1][];
-        animation[0] = new HitboxPoint[]{new HitboxPoint(point.x,point.y,point.radius,point.type,point.intensity,this)};
+        hitboxes = new HitboxPoint[1][];
+        hitboxes[0] = new HitboxPoint[]{new HitboxPoint(point.x,point.y,point.radius,point.type,point.intensity,this)};
     }
 }

@@ -36,6 +36,7 @@ public class Player {
     Module[] modules;
     Integer center;
     HitboxPoint[] hitboxes;
+    HitboxPoint[] hurtboxes;
     
     int playerNum;
     
@@ -52,8 +53,10 @@ public class Player {
     int damage;
 
     int maxPause;
-    int pause;
+    int goodPause;
+    int damagePause;
     int iframes;
+    int psuedoIframes;
     
     int damageFrame = 0;
     
@@ -185,6 +188,15 @@ public class Player {
                 }
             }
         }
+        else if (controller.pressed(SnesController.Y)) {
+            
+            for (int s = 0; s < moduleSelections.length; s++) {
+                if (moduleSelections[s] == -1) {
+                    moduleSelections[s] = Players.random.nextInt(Modules.NUM_MODULES);
+                    break;
+                }
+            }
+        }
     }
     
     public void drawPlayerPreview(Graphics2D g, boolean drawMouse) {
@@ -226,27 +238,27 @@ public class Player {
     
     public void tickGame(){
         
-        controller.clearPressed();
-        controller.update();
-        
         if(!alive){
             hitboxes = null;
+            hurtboxes = null;
             return;
         }
         
         if(explosionFrame > 0){
             if(explosionFrame > 3 && explosionFrame < 15){
                 hitboxes = new HitboxPoint[1];
-                hitboxes[0] = new HitboxPoint((int)x,(int)y,200,10,100,null);
+                Hitbox hitbox = new Hitbox(20,new HitboxPoint((int)x,(int)y,200,10,100,null));
+                hitboxes[0] = hitbox.hitboxes[0][0];
             }
             else{
                 hitboxes = null;
             }
+            hurtboxes = null;
             return;
         }
         
-        if(pause > 0){
-            pause --;
+        if(damagePause > 0){
+            damagePause --;
             if(mash && deathVelocity > 0 || deathLevel > 0 &&
                     controller.pressed(SnesController.X + mashButton, false)){
                 deathVelocity -= 0.1;
@@ -256,8 +268,17 @@ public class Player {
                 deathLevel -= 0;
                 if(numButtons > 0)mashButton = Players.random.nextInt(4);
             }
+            hitboxes = new HitboxPoint[0];
+            hurtboxes = new HitboxPoint[0];
             return;
         }
+        if(goodPause > 0){
+            goodPause --;
+            return;
+        }
+        controller.clearPressed();
+        controller.update();
+        
         if(numButtons > 0 || deathVelocity > 0 || deathLevel > 0){
             if (mash){
                 deathLevel += deathVelocity;
@@ -287,10 +308,6 @@ public class Player {
                         deathVelocity = 0;
                         iframes = 90;
                     }
-//                    if(lastPressTime != 0){
-//                        System.out.println(System.currentTimeMillis() - lastPressTime);
-//                    }
-//                    lastPressTime = System.currentTimeMillis();
                 }
             }
             controller.clearPressed();
@@ -319,8 +336,9 @@ public class Player {
             lastR = rotation;
             rVel = (rotation + spinDirection*(deathLevel)/300f)%(float)(Math.PI*2)-rotation;
             rotation = (rotation + spinDirection*(deathLevel)/300f)%(float)(Math.PI*2);
-            hitboxes = new HitboxPoint[1];
-            hitboxes[0] = new HitboxPoint((int)x,(int)y,50,0,100,null);
+            hurtboxes = new HitboxPoint[1];
+            hurtboxes[0] = new HitboxPoint((int)x,(int)y,50,0,100,null);
+            hitboxes = new HitboxPoint[0];
             return;
         }
         
@@ -421,14 +439,23 @@ public class Player {
             }
         }
         
+        if(psuedoIframes > 0){
+            hurtboxes = new HitboxPoint[0];
+        }
+        else {
+            hurtboxes = new HitboxPoint[modules[0].getHurtbox().length + modules[1].getHurtbox().length+
+                    modules[2].getHurtbox().length + modules[3].getHurtbox().length + 1];
+            hurtboxes[0] = new HitboxPoint((int)x,(int)y,43,0,100,null);
+        }
         hitboxes = new HitboxPoint[modules[0].getHitbox().length + modules[1].getHitbox().length+
-        modules[2].getHitbox().length + modules[3].getHitbox().length + 1];
-        hitboxes[0] = new HitboxPoint((int)x,(int)y,43,0,100,null);
-        int hitboxNum = 1;
+                modules[2].getHitbox().length + modules[3].getHitbox().length];
+        int hitboxNum = 0;
+        int hurtboxNum = 1;
         for(int i = 0; i < 4; i ++){
             HitboxPoint[] hitboxFrame = modules[i].getHitbox();
             for(int j = 0; j < hitboxFrame.length; j ++){
-                Point rotatedPoint = Calcs.rotatePoint(hitboxFrame[j].x + x-40,hitboxFrame[j].y + y-120,x,y,Math.toDegrees(rotation)+i*90);
+                HitboxPoint h = hitboxFrame[j];
+                Point rotatedPoint = Calcs.rotatePoint(h.x + x-40,h.y + y-120,x,y,Math.toDegrees(rotation)+i*90);
                 
                 if(hitboxFrame[j].type == 3 && modules[i].frameTimer == 1){
                     
@@ -441,10 +468,34 @@ public class Player {
                             velocityY,modules[i].projectile,projectileRotation, playerNum, modules[i].type));
                     
                 }
-                    hitboxes[hitboxNum] = new HitboxPoint(rotatedPoint.x,rotatedPoint.y,hitboxFrame[j].radius,
-                            hitboxFrame[j].type,hitboxFrame[j].intensity,hitboxFrame[j].parent);
+                hitboxes[hitboxNum] = new HitboxPoint(rotatedPoint.x,rotatedPoint.y,h.radius,
+                        h.type,h.intensity,h.parent);
                 hitboxNum ++;
             }
+            HitboxPoint[] hurtboxFrame = modules[i].getHurtbox();
+            if(psuedoIframes <= 0)
+                for(int j = 0; j < hurtboxFrame.length; j ++){
+                    HitboxPoint h = hurtboxFrame[j];
+                    Point rotatedPoint = Calcs.rotatePoint(h.x + x-40,h.y + y-120,x,y,Math.toDegrees(rotation)+i*90);
+
+                    if(hurtboxFrame[j].type == 3 && modules[i].frameTimer == 1){
+
+                        double projectileRotation = rotation + i * Math.PI / 2 - Math.PI / 2;
+
+                        float velocityX = (float)Math.cos(projectileRotation)*7;
+                        float velocityY = (float)Math.sin(projectileRotation)*7;
+
+                        game.projectiles.add(new Projectile(rotatedPoint.x,rotatedPoint.y,velocityX,
+                                velocityY,modules[i].projectile,projectileRotation, playerNum, modules[i].type));
+
+                    }
+                    hurtboxes[hurtboxNum] = new HitboxPoint(rotatedPoint.x,rotatedPoint.y,h.radius,
+                            h.type,h.intensity,h.parent);
+                    hurtboxNum ++;
+                }
+        }
+        if(psuedoIframes > 0){
+            psuedoIframes --;
         }
     }
     
@@ -524,12 +575,12 @@ public class Player {
 
     public void takeDamage(int damage, int type, double direction){
         
-        if(deathLevel > 0 || deathVelocity > 0 || iframes > 0){
+        if(deathLevel > 0 || deathVelocity > 0 || iframes > 0 || psuedoIframes > 0){
             return;
         }
         double knockback = Math.pow(damage,3/4f)*1.2f*Math.pow(this.damage+100, 1/4f)/Math.pow(100,1/4f);
         
-        pause = damage*2;
+        damagePause = damage*2;
         maxPause = damage*2;
         
         //calculate direction
@@ -541,7 +592,6 @@ public class Player {
         jitterX = (float)Math.abs(Math.cos(direction)*knockback);
         jitterY = (float)Math.abs(Math.sin(direction)*knockback);
         
-        System.out.println(type);
         if(type != 2 && type != 6){
             if(this.damage > 60 && mash){
                 deathVelocity = (float)(Math.pow((this.damage-60)*Math.pow(damage,1/2f),1/2f)/12);
@@ -560,7 +610,7 @@ public class Player {
 //                deathVelocity = 1.6f;
                 
 //                deathVelocity = 1.37f;
-                deathVelocity = 0.37f+(this.damage)/220f;
+                deathVelocity = 0.4f;
                 
                 mashButton = Players.random.nextInt(4);
                 nextMashButton = Players.random.nextInt(3);
@@ -573,6 +623,7 @@ public class Player {
             }
 
             this.damage += damage;
+            psuedoIframes = 20;
         }
         else{
             int dir = Math.round(rotation/Math.abs(rotation));
@@ -580,9 +631,12 @@ public class Player {
         }
     }
     
-    public void addPause(int damageDealt){
+    public void addPause(int damageDealt, boolean damaged){
         
-        pause = damageDealt*2;
+        if(damaged)
+            damagePause = damageDealt*2;
+        else
+            goodPause = damageDealt*2;
         maxPause = damageDealt*2;
         
         jitterX = 0;
@@ -615,11 +669,11 @@ public class Player {
         float x2 = this.x;
         float y2 = this.y;
         
-        if(pause > 0 && (Math.abs(jitterX) > 0 || Math.abs(jitterY) > 0)){
+        if(damagePause > 0 && (Math.abs(jitterX) > 0 || Math.abs(jitterY) > 0)){
             
             float dir = Players.random.nextFloat(2f);
-            x2 += (jitterX - dir * jitterX)*((float)pause/maxPause);
-            y2 += (jitterY - dir * jitterY)*((float)pause/maxPause);
+            x2 += (jitterX - dir * jitterX)*((float)damagePause/maxPause);
+            y2 += (jitterY - dir * jitterY)*((float)damagePause/maxPause);
         }
         else if(numButtons > 0 || deathVelocity > 0|| deathLevel > 0){
             float dist = deathLevel*8/100f + Players.random.nextFloat((deathLevel+0.01f)*2/100);
@@ -678,6 +732,15 @@ public class Player {
             damageFrame++;
             if (damageFrame >= 24) damageFrame = 0;
         }
+        if(damagePause > 0 && maxPause - damagePause < 10){
+            gPlayer.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, 0.7f));
+            g.translate(x2-x, y2-x);
+            gPlayer.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, 0.45f));
+            gPlayer.setColor(Color.red);
+            
+            gPlayer.fillRect(-120, -120, 240, 240); // Fill the entire buffer with red
+            g.translate(-x2+x, -y2+x);
+        }
         gPlayer.dispose();
 
         g.drawImage(Players.shadow, (int)x2-50,(int)y2-50, null);
@@ -705,6 +768,20 @@ public class Player {
             
         if(DRAW_HITBOXES){
             int lastType = -1;
+            for(int i = 0; i < hurtboxes.length; i ++){
+                HitboxPoint hp = hurtboxes[i];
+                if(hp.type != lastType){
+                    lastType = hp.type;
+                    switch(hp.type){
+                        case 0:g.setColor(HITBOX0);break;
+                        case 1:g.setColor(HITBOX1);break;
+                        case 2:g.setColor(HITBOX2);break;
+                        case 3:g.setColor(HITBOX3);break;
+                        default:g.setColor(HITBOX4);break;
+                    }
+                }
+                g.fillOval(hp.x-hp.radius,hp.y-hp.radius,hp.radius*2,hp.radius*2);
+            }
             for(int i = 0; i < hitboxes.length; i ++){
                 HitboxPoint hp = hitboxes[i];
                 if(hp.type != lastType){

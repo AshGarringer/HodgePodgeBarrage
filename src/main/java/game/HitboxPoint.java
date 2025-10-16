@@ -20,14 +20,6 @@ public class HitboxPoint {
     public Hitbox parent;
     public Projectile projectileParent;
     
-    // 0: Damageable hitbox
-    // 1: Attacking hitbox
-    // 2: Shield hitbox
-    // 3: Projectile spawnpoint
-    // 4: Reflector hitbox
-    // 5: Electric counter hitbox
-    // 6: Shield AND reflector hitbox
-    
     public HitboxPoint(String string, Hitbox parent){
         String[] arr = string.split(",");
         try{
@@ -80,5 +72,51 @@ public class HitboxPoint {
     }
     public double getdamage() {
         return intensity;
+    }
+    
+    public static boolean isHurtbox(String string){
+        String[] arr = string.split(","); 
+        try{
+            return Integer.parseInt(arr[3]) == 0;
+        }
+        catch (Exception e){
+            return true;
+        }
+    }
+    
+    // Methods for collision detection
+    
+    // 0: Damageable hitbox
+    // 1: Attacking hitbox
+    // 2: Shield hitbox
+    // 3: Projectile spawnpoint
+    // 4: Reflector hitbox
+    // 5: Electric counter hitbox
+    // 6: Shield AND reflector hitbox
+    // 10: Player explosion
+    
+    public boolean isHurtbox(){
+        return type == 0 || type == 4;
+    }
+    public boolean isAttacking(){
+        return type == 1 || type == 6 || type == 10;
+    }
+    public boolean isShielding(){
+        return type == 2 || type == 5 || type == 6;
+    }
+    public boolean isReflecting(){
+        return type == 4 || type == 6;
+    }
+    public boolean isHurtbox(HitboxPoint h){
+        return h.type == 0 || h.type == 4;
+    }
+    public static boolean isAttacking(HitboxPoint h){
+        return h.type == 1 || h.type == 6 || h.type == 10;
+    }
+    public static boolean isShielding(HitboxPoint h){
+        return h.type == 2 || h.type == 5 || h.type == 6;
+    }
+    public static boolean isReflecting(HitboxPoint h){
+        return h.type == 4 || h.type == 6;
     }
 }

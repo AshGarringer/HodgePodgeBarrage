@@ -86,6 +86,12 @@ public abstract class Engine extends Canvas implements Runnable{
                 }
             }
             catch (Exception e){
+                
+                try {
+                    Thread.sleep(Math.max(time_per_tick/2,0));
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(Engine.class.getName()).log(Level.SEVERE, null, ex);
+                }
                 e.printStackTrace();
                 if(!this.handleError(e)){
                     break;

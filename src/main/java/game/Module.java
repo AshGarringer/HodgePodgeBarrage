@@ -75,8 +75,8 @@ public class Module {
                 break;
         }
         
-        for(int i = 0; i < hitbox.animation.length && startup == -1; i ++){
-            HitboxPoint[] arr = hitbox.animation[i];
+        for(int i = 0; i < hitbox.hurtboxes.length && startup == -1; i ++){
+            HitboxPoint[] arr = hitbox.hurtboxes[i];
             for(int j = 0; j < arr.length; j ++){
                 if(arr[j].type > 0){
                     startup = i;
@@ -126,8 +126,11 @@ public class Module {
         return animation[frame];
     }
     
+    public HitboxPoint[] getHurtbox(){
+        return hitbox.hurtboxes[frame];
+    }
     public HitboxPoint[] getHitbox(){
-        return hitbox.animation[frame];
+        return hitbox.hitboxes[frame];
     }
     
     private Module(BufferedImage[] animation, int loop_start, int loop_length, Hitbox hitbox, int index, int startup, BufferedImage[] projectile, int type){

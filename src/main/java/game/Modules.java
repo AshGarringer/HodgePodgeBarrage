@@ -104,10 +104,10 @@ public class Modules {
             boolean frameAppended = false;
             hitboxTXT.append("\n");
             
-            for(int i = 0; i < module.hitbox.animation.length; i ++){
+            for(int i = 0; i < module.hitbox.hurtboxes.length; i ++){
                 
                 boolean hitboxAppended = false;
-                HitboxPoint[] frame = module.hitbox.animation[i];
+                HitboxPoint[] frame = module.hitbox.hurtboxes[i];
                 
                 if(frameAppended)hitboxTXT.append(" ");
                 else frameAppended = true;
