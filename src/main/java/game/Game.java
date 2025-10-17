@@ -101,8 +101,8 @@ public class Game extends Engine {
             case 1:
                 // main menu
                 if(state.isTransit())break;
-//                if(MainMenu.animation.getFrame() == 60)
-//                    audioManager.playMusic("ThemeIntro.ogg", "ThemeLoop.ogg");
+                if(MainMenu.animation.getFrame() == 60)
+                    audioManager.playMusic("ThemeIntro.ogg", "ThemeLoop.ogg");
                 for(Integer id : controllerIds){
                     if(SnesController.getButtonHeld(id, SnesController.START)){
                         state.transition(80, 2,60);
@@ -114,6 +114,12 @@ public class Game extends Engine {
                 }
                 break;
             case 2:
+                while(controllerIds.size() > players.size()){
+                    players.add(new Player(this, controllerIds.get(players.size()),players.size()));
+                    players.get(players.size() -1).initMenu();
+                }
+                if(state.getTransit() == -1)
+                    audioManager.playMusic("HPRBMenuIntro.ogg", "HPRBMenuLoop.ogg");
                 if(state.isTransit())break;
                 if(checkKonami() == true){
                     for (Player player : players) {
@@ -339,38 +345,53 @@ public class Game extends Engine {
                     }
                 }
                 
-                if(Math.sqrt(Math.pow(player2.x - player1.x, 2) + Math.pow(player2.y-player1.y,2)) < 88){
+                if(Math.sqrt(Math.pow(player2.x+player2.xVel - player1.x-player1.xVel, 2)+
+                                Math.pow(player2.y+player2.yVel - player1.y-player1.yVel,2)) <= 86){
+                    if(Math.sqrt(Math.pow(player2.x - player1.x, 2) + Math.pow(player2.y-player1.y,2)) > 86){
                     
-                    // returns the respective direction of player1 (to be transfered to p2)
-                    double cdir1 = Math.atan2(player2.y - player1.y, player2.x-player1.x);
-                    // returns the respective direction of player2 (to be transfered to p1)
-                    double cdir2 = Math.atan2(player1.y - player2.y, player1.x-player2.x);
-                   
-                    double p1dir = Math.atan2(player1.yVel, player1.xVel);
-                    double p1Vel = Math.sqrt(player1.xVel*player1.xVel + player1.yVel*player1.yVel);
-                    
-                    double p2dir = Math.atan2(player2.yVel, player2.xVel);
-                    double p2Vel = Math.sqrt(player2.xVel*player2.xVel + player2.yVel*player2.yVel);
-                    
-                    double cveloc1 = Math.cos(p1dir-cdir1)*p1Vel;
-                    double cveloc2 = Math.cos(p2dir-cdir2)*p2Vel;
-                    
-                    player1.xVel -= Math.cos(cdir1)*cveloc1;
-                    player1.yVel -= Math.sin(cdir1)*cveloc1;
-                    player1.xVel += Math.cos(cdir2)*cveloc2;
-                    player1.yVel += Math.sin(cdir2)*cveloc2;
-                    
-                    player2.xVel -= Math.cos(cdir2)*cveloc2;
-                    player2.yVel -= Math.sin(cdir2)*cveloc2;
-                    player2.xVel += Math.cos(cdir1)*cveloc1;
-                    player2.yVel += Math.sin(cdir1)*cveloc1;
-                    
-//                    float holderX = player1.xVel;
-//                    float holderY = player1.yVel;
-//                    player1.xVel = player2.xVel;
-//                    player1.yVel = player2.yVel;
-//                    player2.xVel = holderX;
-//                    player2.yVel = holderY;
+                        // returns the respective direction of player1 (to be transfered to p2)
+                        double cdir1 = Math.atan2(player2.y - player1.y, player2.x-player1.x);
+                        // returns the respective direction of player2 (to be transfered to p1)
+                        double cdir2 = Math.atan2(player1.y - player2.y, player1.x-player2.x);
+
+                        double p1dir = Math.atan2(player1.yVel, player1.xVel);
+                        double p1Vel = Math.sqrt(player1.xVel*player1.xVel + player1.yVel*player1.yVel);
+
+                        double p2dir = Math.atan2(player2.yVel, player2.xVel);
+                        double p2Vel = Math.sqrt(player2.xVel*player2.xVel + player2.yVel*player2.yVel);
+
+                        double cveloc1 = Math.cos(p1dir-cdir1)*p1Vel;
+                        double cveloc2 = Math.cos(p2dir-cdir2)*p2Vel;
+
+                        player1.xVel -= Math.cos(cdir1)*cveloc1;
+                        player1.yVel -= Math.sin(cdir1)*cveloc1;
+                        player1.xVel += Math.cos(cdir2)*cveloc2;
+                        player1.yVel += Math.sin(cdir2)*cveloc2;
+
+                        player2.xVel -= Math.cos(cdir2)*cveloc2;
+                        player2.yVel -= Math.sin(cdir2)*cveloc2;
+                        player2.xVel += Math.cos(cdir1)*cveloc1;
+                        player2.yVel += Math.sin(cdir1)*cveloc1;
+                    }
+                    else {
+                        // returns the respective direction of player1 (to be transfered to p2)
+                        double cdir1 = Math.atan2(player2.y - player1.y, player2.x-player1.x);
+                        // returns the respective direction of player2 (to be transfered to p1)
+                        double cdir2 = Math.atan2(player1.y - player2.y, player1.x-player2.x);
+
+                        double cveloc1 = 0.5f;
+                        double cveloc2 = 0.5f;
+
+                        player1.xVel -= Math.cos(cdir1)*cveloc1;
+                        player1.yVel -= Math.sin(cdir1)*cveloc1;
+                        player1.xVel += Math.cos(cdir2)*cveloc2;
+                        player1.yVel += Math.sin(cdir2)*cveloc2;
+
+                        player2.xVel -= Math.cos(cdir2)*cveloc2;
+                        player2.yVel -= Math.sin(cdir2)*cveloc2;
+                        player2.xVel += Math.cos(cdir1)*cveloc1;
+                        player2.yVel += Math.sin(cdir1)*cveloc1;
+                    }
                 }
             }
         }
