@@ -118,8 +118,8 @@ public class Game extends Engine {
                     players.add(new Player(this, controllerIds.get(players.size()),players.size()));
                     players.get(players.size() -1).initMenu();
                 }
-                if(state.getTransit() == -1)
-                    audioManager.playMusic("HPRBMenuIntro.ogg", "HPRBMenuLoop.ogg");
+//                if(state.getTransit() == -1)
+//                    audioManager.playMusic("HPRBMenuIntro.ogg", "HPRBMenuLoop.ogg");
                 if(state.isTransit())break;
                 if(checkKonami() == true){
                     for (Player player : players) {

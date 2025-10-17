@@ -88,6 +88,8 @@ public class Player {
     Integer[] moduleSelections;
     Float[] mouse;
     Integer playerHover;
+    
+    int wrongButtons;
 
     public Player(Game game, int controllerId, Integer playerNum){
         x = 0;
@@ -304,9 +306,21 @@ public class Player {
                         if(nextMashButton >= mashButton)nextMashButton ++;
                     }
                     else{
+                        wrongButtons = 0;
                         deathLevel = 0;
                         deathVelocity = 0;
                         iframes = 90;
+                    }
+                }
+                for(int i = 0; i < 4; i ++){
+                    if(i == mashButton)continue;
+                    
+                    if(controller.pressed(SnesController.X + i, false)){
+                        wrongButtons ++;
+                        if(wrongButtons == 4){
+                            wrongButtons = 0;
+                            numButtons ++;
+                        }
                     }
                 }
             }
@@ -605,7 +619,7 @@ public class Player {
             }
             
             if(this.damage >= 80 && !mash && (this.damage - 80 + damage * 10)/30 > 3){
-                numButtons = 2 + (this.damage - 80 + damage * 10)/30;
+                numButtons = 2 + (this.damage - 80 + damage * 3)/6;
                 
                 deathVelocity = 0.4f;
                 
