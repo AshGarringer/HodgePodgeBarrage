@@ -296,7 +296,7 @@ public class Player {
                     pressButtonTimer = 10;
                     numButtons --;
                     
-                    deathLevel -= 10;
+//                    deathLevel -= 10;
                     if(deathLevel < 0)deathLevel = 0;
                     if(numButtons > 0){
                         mashButton = nextMashButton;
@@ -604,12 +604,9 @@ public class Player {
                 else spinDirection = -1;
             }
             
-            if(this.damage >= 80 && !mash){
-                numButtons = 2 + (this.damage - 80 + damage * 2)/10;
+            if(this.damage >= 80 && !mash && (this.damage - 80 + damage * 10)/30 > 3){
+                numButtons = 2 + (this.damage - 80 + damage * 10)/30;
                 
-//                deathVelocity = 1.6f;
-                
-//                deathVelocity = 1.37f;
                 deathVelocity = 0.4f;
                 
                 mashButton = Players.random.nextInt(4);
@@ -626,6 +623,8 @@ public class Player {
             psuedoIframes = 20;
         }
         else{
+            goodPause = damagePause;
+            damagePause = 0;
             int dir = Math.round(rotation/Math.abs(rotation));
             rVel = maxRotSpeed*3*dir;
         }

@@ -59,7 +59,7 @@ public class Projectile {
             yVel *= 0.97f;
             xVel *= 0.97f;
             if(timer == 36){
-                damage = 10;
+                damage = 15;
                 radius = 50;
             }
             if(timer == 10){
@@ -108,7 +108,7 @@ public class Projectile {
         
         if (Math.sqrt(Math.pow(player.x - x, 2) + Math.pow(player.y-y, 2)) > 200) return;
         
-        if(!player.alive || player.hurtboxes == null)return;
+        if(!player.alive || player.hurtboxes == null || playerIndex == parent)return;
         for(int i = 0; i < player.hitboxes.length; i ++){
             HitboxPoint h1 = player.hitboxes[i];
             if(hitboxesCollide(h1, this.getHitbox())){
@@ -118,6 +118,8 @@ public class Projectile {
                 else if(h1.isAttacking()){
                     if(type == 6){
                         timer = 37;
+                        damage = 15;
+                        radius = 50;
                     }
                     else{
                         timer = -1;
@@ -129,8 +131,8 @@ public class Projectile {
                         float holderY = yVel;
                         xVel = player.xVel;
                         yVel = player.yVel;
-                        player.xVel += 0.9*holderX;
-                        player.yVel += 0.9*holderY;
+                        player.xVel = holderX;
+                        player.yVel = holderY;
                     }
                     else {
                         timer = -1;
@@ -157,16 +159,38 @@ public class Projectile {
                     if(timer <= 36){
                         player.takeDamage((int)(damage * h1.intensity / 100), 1,
                                 Math.atan2(player.y - y,  player.x - x));
-                    }
-                    else{
-                        float holderX = xVel;
-                        float holderY = yVel;
-                        xVel = player.xVel;
-                        yVel = player.yVel;
-                        player.xVel += 0.9*holderX;
-                        player.yVel += 0.9*holderY;
-                    }
                     return;
+                    }
+                }
+            }
+            if(Math.sqrt(Math.pow(player.x+player.xVel - x-xVel, 2)+
+                            Math.pow(player.y+player.yVel - y-yVel,2)) <= 50f){
+                if(Math.sqrt(Math.pow(player.x - x, 2) + Math.pow(player.y-y,2)) > 50f){
+                    
+                    // returns the respective direction of player1 (to be transfered to p2)
+                    double cdir1 = Math.atan2(player.y - y, player.x-x);
+                    // returns the respective direction of player2 (to be transfered to p1)
+                    double cdir2 = Math.atan2(player.y - y, player.x-x);
+
+                    double p1dir = Math.atan2(player.yVel, player.xVel);
+                    double p1Vel = Math.sqrt(player.xVel*player.xVel + player.yVel*player.yVel);
+
+                    double p2dir = Math.atan2(yVel, xVel);
+                    double p2Vel = Math.sqrt(xVel*xVel + yVel*yVel);
+
+                    double cveloc1 = Math.cos(p1dir-cdir1)*p1Vel;
+                    double cveloc2 = Math.cos(p2dir-cdir2)*p2Vel;
+
+                    player.xVel -= Math.cos(cdir1)*cveloc1;
+                    player.yVel -= Math.sin(cdir1)*cveloc1;
+                    player.xVel += Math.cos(cdir2)*cveloc2;
+                    player.yVel += Math.sin(cdir2)*cveloc2;
+
+                    xVel -= Math.cos(cdir2)*cveloc2;
+                    yVel -= Math.sin(cdir2)*cveloc2;
+                    xVel += Math.cos(cdir1)*cveloc1;
+                    yVel += Math.sin(cdir1)*cveloc1;
+                        
                 }
             }
         }

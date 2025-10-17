@@ -315,15 +315,16 @@ public class Game extends Engine {
                     }
                 }
                 
-                for(int k = 0; k < player1.hitboxes.length; k ++){
-                    HitboxPoint h1 = player1.hitboxes[k];
-                    for(int l = 0; l < player2.hurtboxes.length; l ++){
-                        HitboxPoint h2 = player2.hurtboxes[l];
-                        if(hitboxesCollide(h1, h2)){
-                            handlePlayerCollision(player1,player2,h1,h2);
+                if(player2.hurtboxes != null)
+                    for(int k = 0; k < player1.hitboxes.length; k ++){
+                        HitboxPoint h1 = player1.hitboxes[k];
+                        for(int l = 0; l < player2.hurtboxes.length; l ++){
+                            HitboxPoint h2 = player2.hurtboxes[l];
+                            if(hitboxesCollide(h1, h2) && h1.isAttacking()){
+                                handlePlayerCollision(player1,player2,h1,h2);
+                            }
                         }
                     }
-                }
                 
                 for(int k = 0; k < player2.hitboxes.length; k ++){
                     HitboxPoint h2 = player2.hitboxes[k];
@@ -335,15 +336,19 @@ public class Game extends Engine {
                     }
                 }
                 
-                for(int k = 0; k < player2.hitboxes.length; k ++){
-                    HitboxPoint h2 = player2.hitboxes[k];
-                    for(int l = 0; l < player1.hurtboxes.length; l ++){
-                        HitboxPoint h1 = player1.hurtboxes[l];
-                        if(hitboxesCollide(h2, h1)){
-                            handlePlayerCollision(player2,player1,h2,h1);
+                if(player1.hurtboxes != null)
+                    for(int k = 0; k < player2.hitboxes.length; k ++){
+                        HitboxPoint h2 = player2.hitboxes[k];
+                        for(int l = 0; l < player1.hurtboxes.length; l ++){
+                            HitboxPoint h1 = player1.hurtboxes[l];
+                            if(hitboxesCollide(h2, h1) && h2.isAttacking()){
+                                handlePlayerCollision(player2,player1,h2,h1);
+                            }
                         }
                     }
-                }
+                
+                if(player1.hurtboxes == null)continue;
+                if(player2.hurtboxes == null)continue;
                 
                 if(Math.sqrt(Math.pow(player2.x+player2.xVel - player1.x-player1.xVel, 2)+
                                 Math.pow(player2.y+player2.yVel - player1.y-player1.yVel,2)) <= 86){
