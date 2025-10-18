@@ -351,7 +351,7 @@ public class Player {
             lastR = rotation;
             rVel = (rotation + spinDirection*(deathLevel)/300f)%(float)(Math.PI*2)-rotation;
             rotation = (rotation + spinDirection*(deathLevel)/300f)%(float)(Math.PI*2);
-            hurtboxes = new HitboxPoint[1];
+            hurtboxes = new HitboxPoint[0];
             hitboxes = new HitboxPoint[1];
             Hitbox hitbox = new Hitbox(4,new HitboxPoint((int)x,(int)y,50,1,100,null));
             hitboxes[0] = hitbox.hitboxes[0][0];
@@ -647,6 +647,7 @@ public class Player {
             damagePause = 0;
             int dir = Math.round(rotation/Math.abs(rotation));
             rVel = maxRotSpeed*3*dir;
+            psuedoIframes = 10;
         }
     }
     

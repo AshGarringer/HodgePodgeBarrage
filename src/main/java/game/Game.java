@@ -92,6 +92,8 @@ public class Game extends Engine {
                 players.get(players.size() -1).initMenu();
             }
             winner = -1;
+            
+            audioManager.playMusic("HPRBMenu.ogg", "HPRBMenu.ogg");
             MapSelect.reset();
         }
         state.update();
@@ -105,14 +107,15 @@ public class Game extends Engine {
             case 1:
                 // main menu
                 if(state.isTransit())break;
-//                if(MainMenu.animation.getFrame() == 60)
-//                    audioManager.playMusic("ThemeIntro.ogg", "ThemeLoop.ogg");
+                if(MainMenu.animation.getFrame() == 60)
+                    audioManager.playMusic("ThemeIntro.ogg", "ThemeLoop.ogg");
                 for(Integer id : controllerIds){
                     if(SnesController.getButtonHeld(id, SnesController.START)){
                         state.transition(80, 2,60);
                         while(controllerIds.size() > players.size()){
                             players.add(new Player(this, controllerIds.get(players.size()),players.size()));
                             players.get(players.size() -1).initMenu();
+                                audioManager.playMusic("HPRBThemeOutro.ogg", "HPRBMenu.ogg");
                         }
                     }
                 }
@@ -122,8 +125,6 @@ public class Game extends Engine {
                     players.add(new Player(this, controllerIds.get(players.size()),players.size()));
                     players.get(players.size() -1).initMenu();
                 }
-//                if(state.getTransit() == -1)
-//                    audioManager.playMusic("HPRBMenuIntro.ogg", "HPRBMenuLoop.ogg");
                 if(state.isTransit())break;
                 if(checkKonami() == true){
                     for (Player player : players) {
@@ -182,7 +183,11 @@ public class Game extends Engine {
                 }
                 break;
             case 4:
-                if(state.isTransit())break;
+                if(state.isTransit()){
+                    if(state.getTransit() == -1)
+                        audioManager.playMusic("ThemeIntro.ogg", "ThemeLoop.ogg");
+                    break;
+                }
                 if(checkKonami()){
                     Player.DRAW_HITBOXES = !Player.DRAW_HITBOXES;
                 }
@@ -375,17 +380,20 @@ public class Game extends Engine {
                 // too far apart for any meelee attacks
                 if (Math.sqrt(Math.pow(player2.x - player1.x, 2) + Math.pow(player2.y-player1.y,2)) > 350) continue;
                 
+                boolean blocked1 = false;
                 for(int k = 0; k < player1.hitboxes.length; k ++){
                     HitboxPoint h1 = player1.hitboxes[k];
                     for(int l = 0; l < player2.hitboxes.length; l ++){
                         HitboxPoint h2 = player2.hitboxes[l];
                         if(h2.isShielding() && hitboxesCollide(h1, h2)){
                             handlePlayerCollision(player1,player2,h1,h2);
+                            blocked1 = true;
+                            break;
                         }
                     }
                 }
                 
-                if(player2.hurtboxes != null)
+                if(player2.hurtboxes != null && !blocked1)
                     for(int k = 0; k < player1.hitboxes.length; k ++){
                         HitboxPoint h1 = player1.hitboxes[k];
                         for(int l = 0; l < player2.hurtboxes.length; l ++){
@@ -396,17 +404,20 @@ public class Game extends Engine {
                         }
                     }
                 
+                boolean blocked2 = false;
                 for(int k = 0; k < player2.hitboxes.length; k ++){
                     HitboxPoint h2 = player2.hitboxes[k];
                     for(int l = 0; l < player1.hitboxes.length; l ++){
                         HitboxPoint h1 = player1.hitboxes[l];
                         if(h1.isShielding() && hitboxesCollide(h2, h1)){
                             handlePlayerCollision(player2,player1,h2,h1);
+                            blocked2 = true;
+                            break;
                         }
                     }
                 }
                 
-                if(player1.hurtboxes != null)
+                if(player1.hurtboxes != null && !blocked2)
                     for(int k = 0; k < player2.hitboxes.length; k ++){
                         HitboxPoint h2 = player2.hitboxes[k];
                         for(int l = 0; l < player1.hurtboxes.length; l ++){
