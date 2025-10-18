@@ -99,7 +99,7 @@ public class HitboxPoint {
         return type == 0 || type == 4;
     }
     public boolean isAttacking(){
-        return type == 1 || type == 6 || type == 10;
+        return type == 1 || type == 5 || type == 10;
     }
     public boolean isShielding(){
         return type == 2 || type == 5 || type == 6;

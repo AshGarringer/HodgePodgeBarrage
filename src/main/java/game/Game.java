@@ -1,5 +1,6 @@
 package game;
 
+import game.maps.Map;
 import engine.framework.Engine;
 import engine.framework.MultiState;
 import engine.graphics.Text;
@@ -7,6 +8,7 @@ import engine.graphics.Textures;
 import engine.input.SnesController;
 import engine.sound.LwjglAudioManager;
 import engine.sound.SoundPlayer;
+import static game.MainMenu.animation;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -61,6 +63,7 @@ public class Game extends Engine {
                 modules = Modules.getModules();
                 Players.loadImages();
                 ModuleSelect.loadImages();
+                MapSelect.loadImages();
                 MainMenu.load();
                 players = new ArrayList<>();
                 projectiles = new ArrayList<>();
@@ -89,6 +92,7 @@ public class Game extends Engine {
                 players.get(players.size() -1).initMenu();
             }
             winner = -1;
+            MapSelect.reset();
         }
         state.update();
         
@@ -101,8 +105,8 @@ public class Game extends Engine {
             case 1:
                 // main menu
                 if(state.isTransit())break;
-                if(MainMenu.animation.getFrame() == 60)
-                    audioManager.playMusic("ThemeIntro.ogg", "ThemeLoop.ogg");
+//                if(MainMenu.animation.getFrame() == 60)
+//                    audioManager.playMusic("ThemeIntro.ogg", "ThemeLoop.ogg");
                 for(Integer id : controllerIds){
                     if(SnesController.getButtonHeld(id, SnesController.START)){
                         state.transition(80, 2,60);
@@ -131,7 +135,7 @@ public class Game extends Engine {
                 }
                 for (int i = 0; i < players.size(); i ++) {
                     SnesController controller = players.get(i).controller;
-                    players.get(i).tickMenu();
+                    players.get(i).tickModule();
                     if (controller.pressed(SnesController.START)) {
                         boolean allSelected = true;
                         for (Player player : players) {
@@ -140,20 +144,45 @@ public class Game extends Engine {
                             }
                         }
                         if(allSelected){
-                            for (Player player : players) {
-                                player.initGame();
-                            }
-                            map = Map.getMaps()[0];
-                            state.transition(0, 4, 0);
+                            state.transition(60, 3,30);
                             return;
                         }
                     }
                 }
                 break;
             case 3:
-                // map selection
+                for (int i = 0; i < players.size(); i ++) {
+                    SnesController controller = players.get(i).controller;
+                    controller.clearPressed();
+                    controller.update();
+                    if(controller.held(SnesController.UP))
+                        MapSelect.mice[i].y -= 12;
+                    if(controller.held(SnesController.DOWN))
+                        MapSelect.mice[i].y += 12;
+                    if(controller.held(SnesController.LEFT))
+                        MapSelect.mice[i].x -= 12;
+                    if(controller.held(SnesController.RIGHT))
+                        MapSelect.mice[i].x += 12;
+                    
+                    if (controller.pressed(SnesController.A))
+                        for(int j = 0; j < Map.NUM_MAPS; j ++)
+                            if(new Rectangle(1565,290 + 280* j,470,270).contains(MapSelect.mice[i]))
+                                MapSelect.selected = j;
+                    
+                    if (controller.pressed(SnesController.START)) {
+                        if(MapSelect.selected != -1){
+                            for (Player player : players) {
+                                player.initGame();
+                            }
+                            map = Map.getMaps()[MapSelect.selected];
+                            state.transition(20, 4,30);
+                            return;
+                        }
+                    }
+                }
                 break;
             case 4:
+                if(state.isTransit())break;
                 if(checkKonami()){
                     Player.DRAW_HITBOXES = !Player.DRAW_HITBOXES;
                 }
@@ -176,6 +205,7 @@ public class Game extends Engine {
                     if(projectiles.get(i).timer <= 0)tbr = i;
                 }
                 if(tbr >= 0)projectiles.remove(tbr);
+                map.tick();
                 break;
             case 5:
                 // pause game
@@ -193,6 +223,8 @@ public class Game extends Engine {
         int width = window.getWidth();
         int height = window.getHeight();
 
+        g.setClip(0, 0, width, height);
+            
         switch (state.state()) {
             case 0:
                 g.setColor(Color.black);
@@ -233,20 +265,53 @@ public class Game extends Engine {
                 if(state.getTransit() < 0){
                     g.drawImage(ModuleSelect.unroll, -400 + (int)(Math.cos((-Math.PI/2)*state.getTransit())*4000), 0, 4000, 1400, this);
                 }
+                if(state.getTransit() > 0){
+                    g.drawImage(ModuleSelect.unroll, -400 + (int)(Math.cos((-Math.PI/2)*state.getTransit())*4000), 0, 4000, 1400, this);
+                }
                 g.translate(offset2, 0);
                 g.scale(scale2, scale2);
                 // 1220, 375
 
                 // module select
                 break;
+            case 3:
+                this.setHints(g);
+                float scale3 = window.getHeight() / 1400f;
+                float offset3 = (window.getWidth() / scale3 - 3600) / 2;
 
+                g.scale(scale3, scale3);
+                g.translate(offset3, 0);
+                
+                g.drawImage(MapSelect.background, 0, 0, null);
+                
+                for(int i = 0; i < Map.NUM_MAPS; i ++){
+                    g.drawImage(MapSelect.slotPreviews[i], 1565,290 + 280* i, this);
+                    if(MapSelect.selected == i){
+                        g.drawImage(MapSelect.slotPreviews[i], 1565 - 20,290 + 280* i - 20,510,310, this);
+                    }
+                }
+                
+                for(int i = 0; i < players.size(); i ++){
+                    g.drawImage(MapSelect.cursors[i],MapSelect.mice[i].x - 100,MapSelect.mice[i].y - 100,200,200,null);
+                }
+                
+                if(state.getTransit() != 0){
+                    Textures.fillRect(0, 0, 3500, 1400, new Color(0, 0, 0, Math.abs((int)(state.getTransit()*255f))), g,true);
+                }
+                
+                g.translate(offset3, 0);
+                g.scale(scale3, scale3);
+                break;
             case 4:
                 
                 g.setColor(Color.white);
                 g.fillRect(0, 0, width, height);
                 
                 g.translate(width / 2, height / 2);
-                g.drawImage(map.background, -map.width/2, -map.height/2,null);
+                map.drawBackground(g);
+                for (int i = 0; i < players.size(); i++) {
+                    players.get(i).renderBackground(g);
+                }
                 for (int i = 0; i < players.size(); i++) {
                     players.get(i).renderGame(g);
                 }
@@ -256,7 +321,7 @@ public class Game extends Engine {
                     projectile.render(g);
                 }
                 
-                g.drawImage(map.foreground, -map.width/2, -map.height/2,null);
+                map.drawForeground(g);
                 
                 drawStats(g);
                 if(winner == 5){
@@ -267,6 +332,11 @@ public class Game extends Engine {
                 }
                 for (int i = 0; i < players.size(); i++) {
                     players.get(i).renderForeground(g);
+                }
+                g.translate(-width / 2, -height / 2);
+                
+                if(state.getTransit() != 0){
+                    Textures.fillRect(0, 0, 3500, 1400, new Color(0, 0, 0, Math.abs((int)(state.getTransit()*255f))), g,true);
                 }
                 break;
             case 5:
@@ -354,6 +424,9 @@ public class Game extends Engine {
                                 Math.pow(player2.y+player2.yVel - player1.y-player1.yVel,2)) <= 86){
                     if(Math.sqrt(Math.pow(player2.x - player1.x, 2) + Math.pow(player2.y-player1.y,2)) > 86){
                     
+                        float holder = player1.rVel;
+                        player1.rVel = player2.rVel;
+                        player2.rVel = holder;
                         // returns the respective direction of player1 (to be transfered to p2)
                         double cdir1 = Math.atan2(player2.y - player1.y, player2.x-player1.x);
                         // returns the respective direction of player2 (to be transfered to p1)

@@ -147,6 +147,7 @@ public class Textures {
     }
     
     public static void fillRect(int x, int y, int width, int height, Color color, Graphics2D g, boolean alpha){
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
         BufferedImage tinyImage;
         if(alpha) tinyImage = new BufferedImage(1,1,BufferedImage.TYPE_INT_ARGB);
         else tinyImage = new BufferedImage(1,1,BufferedImage.TYPE_INT_RGB);
@@ -156,5 +157,6 @@ public class Textures {
         bg.dispose();
         
         g.drawImage(tinyImage, x, y, width, height,null);
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
     }
 }

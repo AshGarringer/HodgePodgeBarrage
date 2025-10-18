@@ -4,7 +4,9 @@
  */
 package game;
 
+import game.maps.Map;
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 
 /**
@@ -97,9 +99,16 @@ public class Projectile {
                     xVel = (float)(Math.cos(newAngle)*velocity);
                     yVel = (float)(Math.sin(newAngle)*velocity);
                 }
+                Rectangle r = map.zones.get(0);
+                if(x-10 < r.x)xVel = Math.abs(xVel);
+                if(y-10 < r.y)yVel = Math.abs(yVel);
+                if(x+10 > r.x+r.width)xVel = -Math.abs(xVel);
+                if(y+10 > r.y+r.height)yVel = -Math.abs(yVel);
                 break;
             default:
                 if(map.intersects(x, y, 3) != 0)this.timer = -1;
+                Rectangle r2 = map.zones.get(0);
+                if(x-5 < r2.x || y-5<r2.y || x+5 > r2.x+r2.width || y+5 > r2.y + r2.height)this.timer = -1;
                 break;
                 
         }
@@ -108,7 +117,7 @@ public class Projectile {
         
         if (Math.sqrt(Math.pow(player.x - x, 2) + Math.pow(player.y-y, 2)) > 200) return;
         
-        if(!player.alive || player.hurtboxes == null || playerIndex == parent)return;
+        if(!player.alive || player.hurtboxes == null || (type == 6 && timer >= 119))return;
         for(int i = 0; i < player.hitboxes.length; i ++){
             HitboxPoint h1 = player.hitboxes[i];
             if(hitboxesCollide(h1, this.getHitbox())){
@@ -117,9 +126,13 @@ public class Projectile {
                 }
                 else if(h1.isAttacking()){
                     if(type == 6){
-                        timer = 37;
-                        damage = 15;
-                        radius = 50;
+                        if(timer > 36){
+                            timer = 36;
+                            damage = 15;
+                            radius = 50;
+                            player.takeDamage((int)(damage * h1.intensity / 100), 1,
+                                    Math.atan2(player.y - y,  player.x - x));
+                        }
                     }
                     else{
                         timer = -1;

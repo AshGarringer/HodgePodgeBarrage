@@ -13,6 +13,7 @@ public class ModuleSelect {
     public static BufferedImage background;
     public static BufferedImage overlay;
     public static BufferedImage unroll;
+    public static BufferedImage unroll2;
     public static BufferedImage[] cursors;
     
     public static BufferedImage[] slotPreviews;
@@ -25,6 +26,7 @@ public class ModuleSelect {
         
         background = Textures.loadImage("/textures/moduleSelect/background.png");
         unroll = Textures.loadImage("/textures/moduleSelect/paperUnroll.png");
+        unroll2 = Textures.loadImage("/textures/moduleSelect/paperUnroll2.png");
         overlay = Textures.loadImage("/textures/moduleSelect/overlay.png");
         cursors = new BufferedImage[4];
         for(int i = 0; i < 4; i ++){
